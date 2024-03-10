@@ -27,7 +27,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 # Add directories containing header-files
 include_directories(
     .
-    InitialStates
+    InitialState
     Math
     WaveFunctions
     Solvers
@@ -36,7 +36,7 @@ include_directories(
 # Add sources from all directories
 file(
     GLOB SOURCES "*.cpp"
-    GLOB SOURCES "InitialStates/*.cpp"
+    GLOB SOURCES "InitialState/*.cpp"
     GLOB SOURCES "Math/*.cpp"
     GLOB SOURCES "Solvers/*.cpp"
     GLOB SOURCES "WaveFunctions/*.cpp"

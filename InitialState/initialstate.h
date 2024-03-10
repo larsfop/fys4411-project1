@@ -8,6 +8,6 @@
 std::vector<std::unique_ptr<Particle>> SetupRandomUniformInitialState(
     const int numberofdimension,
     const int numberofparticles,
-    std::unique_ptr<class Random> &rng,
+    Random &rng,
     const double stepsize
 );

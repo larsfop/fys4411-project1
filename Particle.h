@@ -1,16 +1,17 @@
 #pragma once
 
 #include <armadillo>
+#include <vector>
 
 class Particle
 {
     public:
-        Particle(arma::vec &position);
-        void ChangePosition(const arma::vec step);
+        Particle(const std::vector<double> &position);
+        void ChangePosition(const std::vector<double> step);
         int getNumberofDimensions() {return m_NumberofDimensions; };
-        arma::vec getPosition() {return m_Position; };
+        std::vector<double> getPosition() {return m_Position; };
 
     private:
         int m_NumberofDimensions;
-        arma::vec m_Position;
+        std::vector<double> m_Position = std::vector<double>();
 };

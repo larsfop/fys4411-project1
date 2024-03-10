@@ -41,5 +41,10 @@ std::unique_ptr<class Sampler> System::RunMetropolisSteps(
 
 double System::ComputeLocalEnergy()
 {
-    return m_wavefunction->LocalEnergy();
+    return m_wavefunction->LocalEnergy(m_particles);
+}
+
+arma::vec System::getParameters()
+{
+    return m_wavefunction->getParameters();
 }

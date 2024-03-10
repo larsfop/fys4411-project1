@@ -2,13 +2,20 @@
 #include "Particle.h"
 #include "Math/random.h"
 
-Particle::Particle(arma::vec &position)
+#include <iostream>
+using namespace std;
+
+Particle::Particle(const std::vector<double> &position)
 {
-    m_NumberofDimensions = position.n_elem;
-    m_Position(m_NumberofDimensions);
+    m_NumberofDimensions = position.size();
+    //m_Position(m_NumberofDimensions);
+    m_Position = position;
 }
 
-void Particle::ChangePosition(const arma::vec step)
+void Particle::ChangePosition(const std::vector<double> step)
 {
-    m_Position += step;
+    for (int i = 0; i < step.size(); i++)
+    {
+        m_Position[i] += step[i];
+    }
 }

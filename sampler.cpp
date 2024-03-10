@@ -2,6 +2,10 @@
 #include <memory>
 #include "sampler.h"
 #include "system.h"
+#include <iostream>
+
+using std::cout;
+using std::endl;
 
 Sampler::Sampler(
     int numberofparticles,
@@ -31,4 +35,28 @@ void Sampler::Sample(bool acceptedstep, class System *system)
 void Sampler::ComputeAverages()
 {
     m_energy = m_DeltaEnergy/m_numberofMetropolisSteps;
+}
+
+void Sampler::printOutput(System &system)
+{
+    auto params = system.getParameters();
+
+
+    cout << endl;
+    cout << "  -- System info -- " << endl;
+    cout << " Number of particles  : " << m_numberofparticles << endl;
+    cout << " Number of dimensions : " << m_numberofdimensions << endl;
+    cout << " Number of Metropolis steps run : 10^" << std::log10(m_numberofMetropolisSteps) << endl;
+    cout << " Step length used : " << m_steplength << endl;
+    cout << " Ratio of accepted steps: " << ((double) m_numberofacceptedsteps) / ((double) m_numberofMetropolisSteps) << endl;
+    cout << endl;
+    cout << "  -- Wave function parameters -- " << endl;
+    cout << " Number of parameters : " << params.n_elem << endl;
+    for (unsigned int i=0; i < params.n_elem; i++) {
+        cout << " Parameter " << i+1 << " : " << params(i) << endl;
+    }
+    cout << endl;
+    cout << "  -- Results -- " << endl;
+    cout << " Energy : " << m_energy << endl;
+    cout << endl;
 }

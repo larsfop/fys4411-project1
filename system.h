@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <vector>
+#include <armadillo>
 
 class System
 {
@@ -16,7 +17,7 @@ public:
         int numberofMetropolisSteps
     );
     double ComputeLocalEnergy();
-
+    arma::vec getParameters();
 
 private:
     int m_numberofparticles;

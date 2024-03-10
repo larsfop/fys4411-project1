@@ -13,12 +13,14 @@ bool Metropolis::Step(
     int numberofdimension = particles.size();
     int index = m_rng->NextInt(numberofdimension-1);
 
-    arma::vec step(numberofdimension, arma::fill::zeros);
+    //arma::vec step(numberofdimension, arma::fill::zeros);
+    std::vector<double> step = std::vector<double>();
     for (int i = 0; i < numberofdimension; i++)
     {
-        step(i) = stepsize * m_rng->NextGaussian();
+        //step(i) = stepsize * m_rng->NextGaussian();
+        step.push_back(stepsize * m_rng->NextGaussian());
     }
-    double w = wavefunction.w(index, step);
+    double w = wavefunction.w(particles, index, step);
 
     if(m_rng->NextDouble() <= w)
     {
