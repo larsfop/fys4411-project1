@@ -1,0 +1,33 @@
+#pragma once
+
+#include <random>
+
+class Random
+{
+private:
+    std::mt19937_64 m_generator;
+
+public:
+    Random(int seed)
+    {
+        m_generator = std::mt19937_64(seed);
+    }
+
+    int NextInt(int upper)
+    {
+        std::uniform_int_distribution<int> rng(0, upper);
+        return rng(m_generator);
+    }
+
+    double NextDouble()
+    {
+        std::uniform_real_distribution<double> rng(0, 1);
+        return rng(m_generator);
+    }
+
+    double NextGaussian()
+    {
+        std::normal_distribution<double> rng(0, 1);
+        return rng(m_generator);
+    }
+};
