@@ -22,6 +22,10 @@ Sampler::Sampler(
     m_DeltaEnergy = 0;
     m_steplength = steplength;
     m_numberofacceptedsteps = 0;
+
+    m_DeltaPsi = arma::vec(2);
+    m_PsiEnergyDerivative = arma::vec(2);
+    m_EnergyDerivative = arma::vec(2);
 }
 
 void Sampler::Sample(bool acceptedstep, class System *system)
@@ -30,11 +34,16 @@ void Sampler::Sample(bool acceptedstep, class System *system)
     m_DeltaEnergy += localenergy;
     m_stepnumber++;
     m_numberofacceptedsteps += acceptedstep;
+
+    arma::vec dparams = system->ComputeDerivatives();
+    m_DeltaPsi += dparams;
+    m_PsiEnergyDerivative += m_DeltaPsi*m_DeltaEnergy;
 }
 
 void Sampler::ComputeAverages()
 {
     m_energy = m_DeltaEnergy/m_numberofMetropolisSteps;
+    m_EnergyDerivative = 2*(m_PsiEnergyDerivative - m_DeltaPsi*m_DeltaEnergy)/m_numberofMetropolisSteps;
 }
 
 void Sampler::printOutput(System &system)

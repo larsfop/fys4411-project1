@@ -8,6 +8,7 @@
 #include "WaveFunctions/simplegaussian.h"
 #include "InitialState/initialstate.h"
 #include "Solvers/metropolis.h"
+#include "Solvers/metropolishastings.h"
 #include "sampler.h"
 #include "system.h"
 
@@ -19,12 +20,16 @@ int main()
 
     int numberofdimensions = 3;
     int numberofparticles = 1;
-    int numberofMetropolisSteps = 1e6;
+    int numberofMetropolisSteps = 1e3;
     int numberofEquilibrationSteps = 1e2;
 
-    double alpha = 0.5;
-    double beta = 1.0;
+    double alpha = 0.3;
+    double beta = 0.7;
     double steplength = 0.1;
+
+    double eta = 0.1;
+    double tol = 1e-7;
+    int maxiter = 20;
 
     auto rng = std::make_unique<Random>(seed);
     auto particles = SetupRandomUniformInitialState(
@@ -35,13 +40,19 @@ int main()
     );
     auto system = std::make_unique<System>(
         std::make_unique<SimpleGaussian>(alpha, beta),
-        std::make_unique<Metropolis>(std::move(rng)),
+        std::make_unique<MetropolisHastings>(std::move(rng)),
         std::move(particles)
     );
-
-    auto sampler = system->RunMetropolisSteps(
+    auto acceptedEquilibrationSteps = system->RunEquilibrationSteps(
         steplength,
         numberofMetropolisSteps
+    );
+    auto sampler = system->FindOptimalParameters(
+        steplength,
+        numberofMetropolisSteps,
+        eta,
+        tol,
+        maxiter
     );
 
     sampler->printOutput(*system);

@@ -16,7 +16,19 @@ public:
         double stepLength,
         int numberofMetropolisSteps
     );
+    int RunEquilibrationSteps(
+        double steplength,
+        int numberofMetropolisSteps
+    );
+    std::unique_ptr<class Sampler> FindOptimalParameters(
+        double steplength,
+        int numberofMetropolisSteps,
+        double learningrate,
+        double tolerance,
+        int maxiterations
+    );
     double ComputeLocalEnergy();
+    arma::vec ComputeDerivatives();
     arma::vec getParameters();
 
 private:

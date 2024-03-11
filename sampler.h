@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <armadillo>
 
 class Sampler
 {
@@ -15,6 +16,7 @@ public:
     void printOutput(class System &system);
     void ComputeAverages();
     double getEnergy() {return m_energy; };
+    arma::vec getEnergyDerivatives() {return m_EnergyDerivative; };
 
 private:
     int m_stepnumber;
@@ -25,4 +27,7 @@ private:
     double m_energy;
     double m_DeltaEnergy;
     double m_steplength;
+    arma::vec m_DeltaPsi;
+    arma::vec m_PsiEnergyDerivative;
+    arma::vec m_EnergyDerivative;
 };
