@@ -5,17 +5,20 @@
 #include <iostream>
 using namespace std;
 
-Particle::Particle(const std::vector<double> &position)
+Particle::Particle(const arma::vec &position)
 {
     m_NumberofDimensions = position.size();
     //m_Position(m_NumberofDimensions);
+    m_InitialPositions = position;
     m_Position = position;
 }
 
-void Particle::ChangePosition(const std::vector<double> step)
+void Particle::ChangePosition(const arma::vec step)
 {
-    for (int i = 0; i < step.size(); i++)
-    {
-        m_Position[i] += step[i];
-    }
+    m_Position += step;
+}
+
+void Particle::ResetPosition()
+{
+    m_Position = m_InitialPositions;
 }

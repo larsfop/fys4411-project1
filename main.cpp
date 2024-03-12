@@ -25,19 +25,27 @@ int main()
 
     double alpha = 0.3;
     double beta = 0.7;
-    double steplength = 0.1;
+    double steplength = 0.01;
 
-    double eta = 0.1;
+    double eta = 0.1/numberofparticles;
     double tol = 1e-7;
-    int maxiter = 20;
+    int maxiter = 2;
 
     auto rng = std::make_unique<Random>(seed);
-    auto particles = SetupRandomUniformInitialState(
+    // auto particles = SetupRandomUniformInitialState(
+    //     numberofdimensions,
+    //     numberofparticles,
+    //     *rng,
+    //     steplength
+    // );
+
+    auto particles = SetupRandomNormalInitialStates(
         numberofdimensions,
         numberofparticles,
         *rng,
-        steplength
+        sqrt(steplength)
     );
+
     auto system = std::make_unique<System>(
         std::make_unique<SimpleGaussian>(alpha, beta),
         std::make_unique<MetropolisHastings>(std::move(rng)),
@@ -54,6 +62,11 @@ int main()
         tol,
         maxiter
     );
+
+    // auto sampler = system->RunMetropolisSteps(
+    //     steplength,
+    //     numberofMetropolisSteps
+    // );
 
     sampler->printOutput(*system);
 

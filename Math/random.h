@@ -6,11 +6,13 @@ class Random
 {
 private:
     std::mt19937_64 m_generator;
+    int m_seed;
 
 public:
     Random(int seed)
     {
         m_generator = std::mt19937_64(seed);
+        m_seed = seed;
     }
 
     int NextInt(int upper)
@@ -29,5 +31,10 @@ public:
     {
         std::normal_distribution<double> rng(0, 1);
         return rng(m_generator);
+    }
+
+    int getSeed()
+    {
+        return m_seed;
     }
 };

@@ -2,6 +2,9 @@
 #include <memory>
 #include "simplegaussian.h"
 
+#include <iostream>
+using namespace std;
+
 SimpleGaussian::SimpleGaussian(
     const double alpha,
     double beta
@@ -57,17 +60,33 @@ arma::vec SimpleGaussian::QuantumForce(std::vector<std::unique_ptr<class Particl
     return qforce;
 }
 
+arma::vec SimpleGaussian::QuantumForce(
+    std::vector<std::unique_ptr<class Particle>> &particles,
+    const int index,
+    const arma::vec Step
+)
+{
+    int numberofdimensions = particles[0]->getNumberofDimensions();
+    arma::vec pos = particles[index]->getPosition();
+    arma::vec qforce = pos + Step;
+    for (int i = 0; i < numberofdimensions; i++)
+    {
+        qforce(i) *= -4*m_alpha*m_beta_z(i);
+    }
+    return qforce; 
+}
+
 double SimpleGaussian::w(std::vector<std::unique_ptr<class Particle>> &particles, const int index, const arma::vec step)
 {
     int numberofdimensions = particles[0]->getNumberofDimensions();
-    std::vector<double> pos = particles[index]->getPosition();
+    arma::vec pos = particles[index]->getPosition();
     double dr2 = 0;
     for (int i = 0; i < numberofdimensions; i++)
     {
-        // dr2 += (pos[i] + step[i])*(pos[i] + step[i]) - pos[i]*pos[i];
-        dr2 += (2*pos[i] + step[i])*step[i]*m_beta_z(i);
+        //dr2 += (pos(i) + step(i))*(pos(i) + step(i)) - pos(i)*pos(i);
+        dr2 += (2*pos(i) + step(i))*step(i)*m_beta_z(i);
     }
-    return exp(-2*m_alpha*dr2);
+    return std::exp(-2*m_alpha*dr2);
 }
 
 // Take the derivative of the the wavefunction as a function of the parameters alpha, beta
@@ -76,8 +95,8 @@ arma::vec SimpleGaussian::dPsidParam(std::vector<std::unique_ptr<class Particle>
     int numberofdimensions = particles[0]->getNumberofDimensions();
     int numberofparticles = particles.size();
 
-    arma::vec derivative(2, arma::fill::zeros);
-    arma::vec r2(numberofdimensions, arma::fill::zeros);
+    arma::vec derivative(2);
+    arma::vec r2(numberofdimensions);
     for (int i = 0; i < numberofparticles; i++)
     {
         arma::vec pos = particles[i]->getPosition();
@@ -89,4 +108,11 @@ arma::vec SimpleGaussian::dPsidParam(std::vector<std::unique_ptr<class Particle>
     derivative(0) = -arma::sum(r2);
     derivative(1) = -m_alpha*r2(2);
     return derivative;
+}
+
+void SimpleGaussian::ChangeParameters(const double alpha, const double beta)
+{
+    m_alpha = alpha,
+    m_beta = beta;
+    m_parameters = {alpha, beta};
 }

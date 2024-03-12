@@ -11,3 +11,10 @@ std::vector<std::unique_ptr<Particle>> SetupRandomUniformInitialState(
     Random &rng,
     const double stepsize
 );
+
+std::vector<std::unique_ptr<Particle>> SetupRandomNormalInitialStates(
+    const int numberofdimensions,
+    const int numberofparticles,
+    Random &rng,
+    const double sqrt_dt
+);

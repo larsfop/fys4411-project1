@@ -36,6 +36,7 @@ std::unique_ptr<class Sampler> System::RunMetropolisSteps(
     for (int i = 0; i < numberofMetropolisSteps; i++)
     {
         bool acceptedStep = m_solver->Step(steplength, *m_wavefunction, m_particles);
+        m_particles[0]->getPosition().print();
         sampler->Sample(acceptedStep, this);
     }
     sampler->ComputeAverages();
@@ -84,6 +85,7 @@ std::unique_ptr<class Sampler> System::FindOptimalParameters(
     // adjust the wf params and restart
     // repeat until a set tolerance or max iterations
     int nparams = m_wavefunction->getParameters().n_elem;
+
     arma::vec params = m_wavefunction->getParameters();
     double alpha = m_wavefunction->getParameters()(0);
     double beta  = m_wavefunction->getParameters()(1);
@@ -96,21 +98,29 @@ std::unique_ptr<class Sampler> System::FindOptimalParameters(
         numberofMetropolisSteps
     );
 
-    int i = 0;
-    while (abs(gradient) > tolerance && i < maxiterations)
+    int iterations = 0;
+    while (gradient > tolerance && iterations < maxiterations)
     {
         sampler = this->RunMetropolisSteps(steplength, numberofMetropolisSteps);
         auto energyderivatives = sampler->getEnergyDerivatives();
 
         gradient = 0;
-        for (int j = 0; j < nparams; j++)
+        for (int i = 0; i < nparams; i++)
         {
-            params(j) -= learningrate*energyderivatives(j);
-            cout << "Parameter " << j+1 << " : " << params(j) << endl;
-            gradient += energyderivatives(j);
+            params(i) -= learningrate*energyderivatives(i);
+            cout << "Parameter " << i+1 << " : " << params(i) << endl;
+            cout << "EnergyDerivative " << i+1 << " : " << energyderivatives(i) << endl;
+            gradient += std::abs(energyderivatives(i));
+        }
+        
+        m_wavefunction->ChangeParameters(params(0), params(1));
+        for (int i = 0; i < m_numberofparticles; i++)
+        {
+            m_particles[i]->ResetPosition();
         }
 
-        i++;
+        iterations++;
     }
+    cout << "Max iterations : " << iterations << endl;
     return sampler;
 }

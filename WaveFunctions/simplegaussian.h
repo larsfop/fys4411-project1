@@ -17,6 +17,12 @@ public:
     double w(std::vector<std::unique_ptr<class Particle>> &particles, const int index, const arma::vec step);
     arma::vec getParameters() {return m_parameters; };
     arma::vec dPsidParam(std::vector<std::unique_ptr<class Particle>> &particles);
+    void ChangeParameters(const double alpha, const double beta);
+    arma::vec QuantumForce(
+        std::vector<std::unique_ptr<class Particle>> &particles,
+        const int index,
+        const arma::vec Step
+    );
 
 private:
     double m_alpha;

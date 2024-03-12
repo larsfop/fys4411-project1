@@ -31,19 +31,25 @@ Sampler::Sampler(
 void Sampler::Sample(bool acceptedstep, class System *system)
 {
     auto localenergy = system->ComputeLocalEnergy();
-    m_DeltaEnergy += localenergy;
+    cout << localenergy << endl;
+    m_energy += localenergy;
     m_stepnumber++;
     m_numberofacceptedsteps += acceptedstep;
 
     arma::vec dparams = system->ComputeDerivatives();
     m_DeltaPsi += dparams;
-    m_PsiEnergyDerivative += m_DeltaPsi*m_DeltaEnergy;
+    m_PsiEnergyDerivative += dparams*localenergy;
 }
 
 void Sampler::ComputeAverages()
 {
-    m_energy = m_DeltaEnergy/m_numberofMetropolisSteps;
-    m_EnergyDerivative = 2*(m_PsiEnergyDerivative - m_DeltaPsi*m_DeltaEnergy)/m_numberofMetropolisSteps;
+    m_energy /= m_numberofMetropolisSteps;
+    m_DeltaPsi /= m_numberofMetropolisSteps;
+    m_PsiEnergyDerivative /= m_numberofMetropolisSteps;
+    m_PsiEnergyDerivative.print();
+    m_DeltaPsi.print();
+    cout << m_energy << endl;
+    m_EnergyDerivative = 2*(m_PsiEnergyDerivative - m_DeltaPsi*m_energy);
 }
 
 void Sampler::printOutput(System &system)

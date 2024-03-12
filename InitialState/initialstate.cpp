@@ -13,12 +13,32 @@ std::vector<std::unique_ptr<Particle>> SetupRandomUniformInitialState(
     auto particles = std::vector<std::unique_ptr<Particle>>();
     for (int i = 0; i < numberofparticles; i++)
     {
-        //arma::vec pos(numberofdimension, arma::fill::zeros);
-        std::vector<double> pos = std::vector<double>();
+        arma::vec pos(numberofdimension);
+        //std::vector<double> pos = std::vector<double>();
         for (int j = 0; j < numberofdimension; j++)
         {
-            //pos(j) = stepsize * (rng.NextDouble() - 0.5);
-            pos.push_back(stepsize * (rng.NextDouble() - 0.5));
+            pos(j) = stepsize * (rng.NextDouble() - 0.5);
+            //pos.push_back(stepsize * (rng.NextDouble() - 0.5));
+        }
+        particles.push_back(std::make_unique<Particle>(pos));
+    }
+    return particles;
+}
+
+std::vector<std::unique_ptr<Particle>> SetupRandomNormalInitialStates(
+    const int numberofdimensions,
+    const int numberofparticles,
+    Random &rng,
+    const double sqrt_dt
+)
+{
+    auto particles = std::vector<std::unique_ptr<Particle>>();
+    for (int i = 0; i < numberofparticles; i++)
+    {
+        arma::vec pos(numberofdimensions);
+        for (int j = 0; j < numberofdimensions; j++)
+        {
+            pos(j) = sqrt_dt * rng.NextGaussian();
         }
         particles.push_back(std::make_unique<Particle>(pos));
     }
