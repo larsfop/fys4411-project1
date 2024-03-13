@@ -14,13 +14,13 @@
 
 using namespace std;
 
-int main()
+int main(int argc, const char *argv[])
 {
     int seed = 1234;
 
-    int numberofdimensions = 3;
-    int numberofparticles = 1;
-    int numberofMetropolisSteps = 1e3;
+    int numberofdimensions = atoi(argv[3]);
+    int numberofparticles = atoi(argv[2]);
+    int numberofMetropolisSteps = stod(argv[1]);
     int numberofEquilibrationSteps = 1e2;
 
     double alpha = 0.3;
@@ -29,7 +29,7 @@ int main()
 
     double eta = 0.1/numberofparticles;
     double tol = 1e-7;
-    int maxiter = 2;
+    int maxiter = 1e3;
 
     auto rng = std::make_unique<Random>(seed);
     // auto particles = SetupRandomUniformInitialState(
@@ -51,10 +51,10 @@ int main()
         std::make_unique<MetropolisHastings>(std::move(rng)),
         std::move(particles)
     );
-    auto acceptedEquilibrationSteps = system->RunEquilibrationSteps(
-        steplength,
-        numberofMetropolisSteps
-    );
+    // auto acceptedEquilibrationSteps = system->RunEquilibrationSteps(
+    //     steplength,
+    //     numberofMetropolisSteps
+    // );
     auto sampler = system->FindOptimalParameters(
         steplength,
         numberofMetropolisSteps,

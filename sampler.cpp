@@ -31,7 +31,7 @@ Sampler::Sampler(
 void Sampler::Sample(bool acceptedstep, class System *system)
 {
     auto localenergy = system->ComputeLocalEnergy();
-    cout << localenergy << endl;
+    // cout << localenergy << endl;
     m_energy += localenergy;
     m_stepnumber++;
     m_numberofacceptedsteps += acceptedstep;
@@ -46,9 +46,9 @@ void Sampler::ComputeAverages()
     m_energy /= m_numberofMetropolisSteps;
     m_DeltaPsi /= m_numberofMetropolisSteps;
     m_PsiEnergyDerivative /= m_numberofMetropolisSteps;
-    m_PsiEnergyDerivative.print();
-    m_DeltaPsi.print();
-    cout << m_energy << endl;
+    // m_PsiEnergyDerivative.print();
+    // m_DeltaPsi.print();
+    // cout << m_energy << endl;
     m_EnergyDerivative = 2*(m_PsiEnergyDerivative - m_DeltaPsi*m_energy);
 }
 

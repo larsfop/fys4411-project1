@@ -36,7 +36,6 @@ std::unique_ptr<class Sampler> System::RunMetropolisSteps(
     for (int i = 0; i < numberofMetropolisSteps; i++)
     {
         bool acceptedStep = m_solver->Step(steplength, *m_wavefunction, m_particles);
-        m_particles[0]->getPosition().print();
         sampler->Sample(acceptedStep, this);
     }
     sampler->ComputeAverages();
@@ -49,7 +48,7 @@ int System::RunEquilibrationSteps(
 {
     int acceptedSteps = 0;
 
-    for (unsigned int i = 0; i < numberOfEquilibrationSteps; i++) {
+    for (int i = 0; i < numberOfEquilibrationSteps; i++) {
         acceptedSteps += m_solver->Step(stepLength, *m_wavefunction, m_particles);
     }
 
@@ -87,8 +86,6 @@ std::unique_ptr<class Sampler> System::FindOptimalParameters(
     int nparams = m_wavefunction->getParameters().n_elem;
 
     arma::vec params = m_wavefunction->getParameters();
-    double alpha = m_wavefunction->getParameters()(0);
-    double beta  = m_wavefunction->getParameters()(1);
     double gradient = 1;
 
     auto sampler = std::make_unique<Sampler>(
@@ -101,6 +98,7 @@ std::unique_ptr<class Sampler> System::FindOptimalParameters(
     int iterations = 0;
     while (gradient > tolerance && iterations < maxiterations)
     {
+        cout << "Iteration : " << iterations+1 << endl;
         sampler = this->RunMetropolisSteps(steplength, numberofMetropolisSteps);
         auto energyderivatives = sampler->getEnergyDerivatives();
 

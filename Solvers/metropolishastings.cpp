@@ -16,8 +16,9 @@ bool MetropolisHastings::Step(
     double sqrt_dt = sqrt(stepsize);
     int numberofparticles = particles.size();
     int numberofdimension = particles[0]->getNumberofDimensions();
-    int index = m_rng->NextInt(numberofparticles-1);
-    int D = 0.5;
+    //int index = m_rng->NextInt(numberofparticles-1);
+    int index = 0;
+    double D = 0.5;
 
     arma::vec qforce = wavefunction.QuantumForce(particles, index);
     arma::vec params = wavefunction.getParameters(); // params = {alpha, beta}
@@ -39,19 +40,9 @@ bool MetropolisHastings::Step(
     {
         greens += 0.5*(qforce(i) + qforcenew(i))*(D*stepsize*0.5*\
         (qforce(i) - qforcenew(i)) - (pos(i) + step(i)) + pos(i));
-        // greens += 0.5*qforce(i)*(1 + step[i])*D*stepsize*0.5*\
-        // (qforce(i)*(1 - step[i]) - (1 + step(i))*pos(i)*beta_z(i));
     }
-    double G = std::exp(greens);
-    double w_Psi = wavefunction.w(particles, index, step);
-    cout << typeid(G).name() << "\t\t" << typeid(w_Psi).name() << endl;
-    cout << w_Psi*G << endl;
-    double w = wavefunction.w(particles, index, step) * exp(greens);
-    cout << "w : " << w << endl;
-    cout << wavefunction.w(particles, index, step) << endl;
-    cout << exp(greens) << endl;
-    cout << wavefunction.w(particles, index, step)*exp(greens) << endl;
 
+    double w = wavefunction.w(particles, index, step) * exp(greens);
     if(m_rng->NextDouble() <= w)
     {
         particles.at(index)->ChangePosition(step);

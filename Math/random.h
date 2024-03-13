@@ -17,19 +17,19 @@ public:
 
     int NextInt(int upper)
     {
-        std::uniform_int_distribution<int> rng(0, upper);
+        std::uniform_int_distribution<int> rng(0.0, upper);
         return rng(m_generator);
     }
 
     double NextDouble()
     {
-        std::uniform_real_distribution<double> rng(0, 1);
+        std::uniform_real_distribution<double> rng(0.0, 1.0);
         return rng(m_generator);
     }
 
     double NextGaussian()
     {
-        std::normal_distribution<double> rng(0, 1);
+        std::normal_distribution<double> rng(0.0, 1.0);
         return rng(m_generator);
     }
 
