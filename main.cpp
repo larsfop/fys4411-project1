@@ -2,6 +2,7 @@
 #include <memory>
 #include <iostream>
 #include <vector>
+#include <time.h>
 
 #include "Particle.h"
 #include "Math/random.h"
@@ -18,8 +19,8 @@ int main(int argc, const char *argv[])
 {
     int seed = 1234;
 
-    int numberofdimensions = atoi(argv[3]);
-    int numberofparticles = atoi(argv[2]);
+    int numberofdimensions = atoi(argv[4]);
+    int numberofparticles = atoi(argv[3]);
     int numberofMetropolisSteps = stod(argv[1]);
     int numberofEquilibrationSteps = 1e2;
 
@@ -29,8 +30,12 @@ int main(int argc, const char *argv[])
 
     double eta = 0.1/numberofparticles;
     double tol = 1e-7;
-    int maxiter = 1e3;
+    int maxiter = stod(argv[2]); //1e3;
 
+    double t_total;
+    clock_t t1,t2;
+
+    t1 = clock();
     auto rng = std::make_unique<Random>(seed);
     // auto particles = SetupRandomUniformInitialState(
     //     numberofdimensions,
@@ -67,8 +72,13 @@ int main(int argc, const char *argv[])
     //     steplength,
     //     numberofMetropolisSteps
     // );
+    t2 = clock();
 
     sampler->printOutput(*system);
+
+    t_total = t2 - t1;
+    double time = ((double) (t_total))/CLOCKS_PER_SEC;
+    cout << "Time : " << time << endl;
 
     return 0;
 }

@@ -10,12 +10,13 @@ Metropolis::Metropolis(std::unique_ptr<class Random> rng) : MonteCarlo(std::move
 bool Metropolis::Step(
     double stepsize,
     class WaveFunction &wavefunction,
-    std::vector<std::unique_ptr<class Particle>> &particles
+    std::vector<std::unique_ptr<class Particle>> &particles,
+    int index
 )
 {
     int numberofdimension = particles[0]->getNumberofDimensions();
     int numberofparticles = particles.size();
-    int index = m_rng->NextInt(numberofparticles-1);
+    //int index = m_rng->NextInt(numberofparticles-1);
 
     arma::vec step(numberofdimension, arma::fill::zeros);
     //std::vector<double> step = std::vector<double>();

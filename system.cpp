@@ -7,7 +7,7 @@
 #include "Solvers/montecarlo.h"
 
 #include <iostream>
-using namespace std;
+using std::cout, std::endl;
 
 System::System(
     std::unique_ptr<class WaveFunction> wavefunction,
@@ -35,7 +35,11 @@ std::unique_ptr<class Sampler> System::RunMetropolisSteps(
     );
     for (int i = 0; i < numberofMetropolisSteps; i++)
     {
-        bool acceptedStep = m_solver->Step(steplength, *m_wavefunction, m_particles);
+        bool acceptedStep;
+        for (int j = 0; j < m_numberofparticles; j++)
+        {
+            acceptedStep = m_solver->Step(steplength, *m_wavefunction, m_particles, j);
+        }
         sampler->Sample(acceptedStep, this);
     }
     sampler->ComputeAverages();
@@ -49,7 +53,10 @@ int System::RunEquilibrationSteps(
     int acceptedSteps = 0;
 
     for (int i = 0; i < numberOfEquilibrationSteps; i++) {
-        acceptedSteps += m_solver->Step(stepLength, *m_wavefunction, m_particles);
+        for (int j = 0; j < m_numberofparticles; j++)
+        {
+            acceptedSteps += m_solver->Step(stepLength, *m_wavefunction, m_particles, j);
+        }
     }
 
     return acceptedSteps;

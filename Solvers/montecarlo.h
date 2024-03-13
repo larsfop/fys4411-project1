@@ -13,7 +13,8 @@ public:
     virtual bool Step(
         double stepsize,
         class WaveFunction &wavefunction,
-        std::vector<std::unique_ptr<class Particle>> &particles
+        std::vector<std::unique_ptr<class Particle>> &particles,
+        int index
     ) = 0;
 
 protected:

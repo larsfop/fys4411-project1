@@ -10,14 +10,15 @@ MetropolisHastings::MetropolisHastings(std::unique_ptr<class Random> rng) : Mont
 bool MetropolisHastings::Step(
     double stepsize,
     class WaveFunction &wavefunction,
-    std::vector<std::unique_ptr<class Particle>> &particles
+    std::vector<std::unique_ptr<class Particle>> &particles,
+    int index
 )
 {
     double sqrt_dt = sqrt(stepsize);
     int numberofparticles = particles.size();
-    int numberofdimension = particles[0]->getNumberofDimensions();
+    int numberofdimensions = particles[0]->getNumberofDimensions();
     //int index = m_rng->NextInt(numberofparticles-1);
-    int index = 0;
+    //int index = 0;
     double D = 0.5;
 
     arma::vec qforce = wavefunction.QuantumForce(particles, index);
@@ -25,10 +26,10 @@ bool MetropolisHastings::Step(
     arma::vec beta_z = {1, 1, params(1)};
 
     arma::vec pos = particles[index]->getPosition();
-    arma::vec step(numberofdimension);
+    arma::vec step(numberofdimensions);
     //std::vector<double> step = std::vector<double>();
     //arma::vec qforcenew = qforce;
-    for (int i = 0; i < numberofdimension; i++)
+    for (int i = 0; i < numberofdimensions; i++)
     {
         step(i) = sqrt_dt*m_rng->NextGaussian() + qforce(i)*stepsize*D;
         //step.push_back(sqrt_dt*m_rng->NextGaussian() + qforce(i)*stepsize*D);
@@ -36,7 +37,7 @@ bool MetropolisHastings::Step(
     }
     arma::vec qforcenew = wavefunction.QuantumForce(particles, index, step);
     double greens = 0;
-    for (int i = 0; i < numberofdimension; i++)
+    for (int i = 0; i < numberofdimensions; i++)
     {
         greens += 0.5*(qforce(i) + qforcenew(i))*(D*stepsize*0.5*\
         (qforce(i) - qforcenew(i)) - (pos(i) + step(i)) + pos(i));
