@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <time.h>
+#include <iomanip>
 
 #include "Particle.h"
 #include "Math/random.h"
@@ -25,12 +26,23 @@ int main(int argc, const char *argv[])
     int numberofEquilibrationSteps = 1e2;
 
     double alpha = 0.3;
-    double beta = 0.7;
+    double beta = 1.0;
     double steplength = 0.01;
 
-    double eta = 0.1/numberofparticles;
+    double eta = 0.1;
     double tol = 1e-7;
     int maxiter = stod(argv[2]); //1e3;
+
+    int width = 20;
+    string Filename = "Results.dat";
+    ofstream outfile(Filename);
+    outfile << setw(width-8) << "alpha"
+            << setw(width) << "dalpha"
+            << setw(width) << "beta"
+            << setw(width) << "dbeta"
+            << setw(width) << "Energy"
+            << endl;
+    outfile.close();
 
     double t_total;
     clock_t t1,t2;

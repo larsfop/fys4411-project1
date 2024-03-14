@@ -3,9 +3,15 @@
 #include "sampler.h"
 #include "system.h"
 #include <iostream>
+#include <iomanip>
 
 using std::cout;
 using std::endl;
+
+using std::setw;
+using std::setprecision;
+using std::fixed;
+using std::scientific;
 
 Sampler::Sampler(
     int numberofparticles,
@@ -26,6 +32,8 @@ Sampler::Sampler(
     m_DeltaPsi = arma::vec(2);
     m_PsiEnergyDerivative = arma::vec(2);
     m_EnergyDerivative = arma::vec(2);
+
+    m_Filename = "Results.dat";
 }
 
 void Sampler::Sample(bool acceptedstep, class System *system)
@@ -74,4 +82,33 @@ void Sampler::printOutput(System &system)
     cout << "  -- Results -- " << endl;
     cout << " Energy : " << m_energy << endl;
     cout << endl;
+}
+
+void Sampler::CreateFile()
+{
+    int width = 20;
+    std::ofstream ofile(m_Filename, std::ofstream::trunc);
+    ofile << setw(width-8) << "alpha"
+            << setw(width) << "EnergyDerivative"
+            << setw(width) << "Energy"
+            << endl;
+    ofile.close();
+}
+
+void Sampler::WritetoFile(System &system)
+{
+    auto params = system.getParameters();
+    int width = 20;
+
+    std::ofstream ofile(m_Filename, std::ofstream::app);
+
+    // ofile << setprecision(6);
+    ofile << setw(width-8) << params(0)
+            << setw(width) << m_EnergyDerivative(0)
+            << setw(width) << params(1)
+            << setw(width) << m_EnergyDerivative(1)
+            << setw(width) << m_energy
+            << endl;
+
+    ofile.close();
 }

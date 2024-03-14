@@ -7,7 +7,8 @@
 #include "Solvers/montecarlo.h"
 
 #include <iostream>
-using std::cout, std::endl;
+using std::cout;
+using std::endl;
 
 System::System(
     std::unique_ptr<class WaveFunction> wavefunction,
@@ -28,21 +29,27 @@ std::unique_ptr<class Sampler> System::RunMetropolisSteps(
 )
 {
     auto sampler = std::make_unique<Sampler>(
-        m_numberofparticles,
-        m_numberofdimensions,
-        steplength,
-        numberofMetropolisSteps
+    m_numberofparticles,
+    m_numberofdimensions,
+    steplength,
+    numberofMetropolisSteps
     );
-    for (int i = 0; i < numberofMetropolisSteps; i++)
-    {
-        bool acceptedStep;
-        for (int j = 0; j < m_numberofparticles; j++)
+    // int numberofthreads;
+    // #pragma omp parallel shared(sampler, numberofthreads)
+    // {
+        for (int i = 0; i < numberofMetropolisSteps; i++)
         {
-            acceptedStep = m_solver->Step(steplength, *m_wavefunction, m_particles, j);
+            bool acceptedStep;
+            for (int j = 0; j < m_numberofparticles; j++)
+            {
+                acceptedStep = m_solver->Step(steplength, *m_wavefunction, m_particles, j);
+            }
+            sampler->Sample(acceptedStep, this);
         }
-        sampler->Sample(acceptedStep, this);
-    }
+    // }
     sampler->ComputeAverages();
+    sampler->WritetoFile(*this);
+
     return sampler;
 }
 
@@ -112,7 +119,7 @@ std::unique_ptr<class Sampler> System::FindOptimalParameters(
         gradient = 0;
         for (int i = 0; i < nparams; i++)
         {
-            params(i) -= learningrate*energyderivatives(i);
+            params(i) -= learningrate*energyderivatives(i)/m_numberofparticles;
             cout << "Parameter " << i+1 << " : " << params(i) << endl;
             cout << "EnergyDerivative " << i+1 << " : " << energyderivatives(i) << endl;
             gradient += std::abs(energyderivatives(i));

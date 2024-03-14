@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 #include <armadillo>
+#include <omp.h>
 
 class System
 {

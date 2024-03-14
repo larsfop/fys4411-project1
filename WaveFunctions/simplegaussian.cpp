@@ -3,6 +3,7 @@
 #include "simplegaussian.h"
 
 #include <iostream>
+#include <iomanip>
 using namespace std;
 
 SimpleGaussian::SimpleGaussian(
@@ -12,7 +13,7 @@ SimpleGaussian::SimpleGaussian(
 {
     m_alpha = alpha;
     m_beta = beta;
-    m_beta_z = {1, 1, beta};
+    m_beta_z = {1.0, 1.0, beta};
     m_parameters = {alpha, beta};
 }
 
@@ -113,7 +114,7 @@ arma::vec SimpleGaussian::dPsidParam(std::vector<std::unique_ptr<class Particle>
     }
     derivative(0) = -(r2(0) + r2(1) + m_beta*r2(2));
     derivative(1) = -m_alpha*r2(2);
-    return derivative; // ex. Psi[alpha]/Psi
+    return derivative; // ex. Psi[alpha]/Psi -> Psi[alpha] = dPsi/dalpha
 }
 
 void SimpleGaussian::ChangeParameters(const double alpha, const double beta)

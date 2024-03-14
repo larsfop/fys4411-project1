@@ -17,6 +17,8 @@ public:
     void ComputeAverages();
     double getEnergy() {return m_energy; };
     arma::vec getEnergyDerivatives() {return m_EnergyDerivative; };
+    void CreateFile();
+    void WritetoFile(System &system);
 
 private:
     int m_stepnumber;
@@ -30,4 +32,5 @@ private:
     arma::vec m_DeltaPsi;
     arma::vec m_PsiEnergyDerivative;
     arma::vec m_EnergyDerivative;
+    std::string m_Filename;
 };
