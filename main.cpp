@@ -25,13 +25,15 @@ int main(int argc, const char *argv[])
     int numberofMetropolisSteps = stod(argv[1]);
     int numberofEquilibrationSteps = 1e2;
 
-    double alpha = 0.3;
+    double alpha = 0.5;
     double beta = 1.0;
     double steplength = 0.01;
 
     double eta = 0.1;
     double tol = 1e-7;
     int maxiter = stod(argv[2]); //1e3;
+
+    omp_set_num_threads(2);
 
     int width = 20;
     string Filename = "Results.dat";
@@ -43,6 +45,9 @@ int main(int argc, const char *argv[])
             << setw(width) << "Energy"
             << endl;
     outfile.close();
+
+    std::ofstream ofile("Energies.dat");
+    ofile.close();
 
     double t_total;
     clock_t t1,t2;

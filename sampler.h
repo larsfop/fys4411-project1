@@ -10,15 +10,17 @@ public:
         int numberofparticles,
         int numberofdimensions,
         double steplength,
-        int numberofMetropolisSteps
+        int numberofMetropolisSteps,
+        int numberofthreads
     );
     void Sample(bool acceptedstep, class System *system);
     void printOutput(class System &system);
     void ComputeAverages();
-    double getEnergy() {return m_energy; };
+    double getEnergy() {return m_Energy; };
     arma::vec getEnergyDerivatives() {return m_EnergyDerivative; };
     void CreateFile();
     void WritetoFile(System &system);
+    void WriteEnergiestoFile(System &system, int iteration);
 
 private:
     int m_stepnumber;
@@ -26,7 +28,10 @@ private:
     int m_numberofparticles;
     int m_numberofdimensions;
     int m_numberofacceptedsteps;
-    double m_energy;
+    int m_numberofthreads;
+    double m_Energy;
+    double m_Energy2;
+    double m_variance;
     double m_DeltaEnergy;
     double m_steplength;
     arma::vec m_DeltaPsi;

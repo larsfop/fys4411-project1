@@ -23,6 +23,8 @@ set(CMAKE_CXX_FLAGS "-g")
 # Add full compiler optimization when in the release build type. Other options include
 # -O0, -O1, -O2.
 set(CMAKE_CXX_FLAGS "-O3")
+# OpenMP
+set(CMAKE_CXX_FLAGS "-fopenmp")
 
 # Add directories containing header-files
 include_directories(

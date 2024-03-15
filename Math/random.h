@@ -37,4 +37,10 @@ public:
     {
         return m_seed;
     }
+
+    void set_seed(int seed)
+    {
+        m_generator.seed(seed);
+        m_seed = seed;
+    }
 };

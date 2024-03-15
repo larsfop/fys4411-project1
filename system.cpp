@@ -28,15 +28,17 @@ std::unique_ptr<class Sampler> System::RunMetropolisSteps(
     int numberofMetropolisSteps
 )
 {
+    int numberofthreads = omp_get_max_threads();
+
     auto sampler = std::make_unique<Sampler>(
     m_numberofparticles,
     m_numberofdimensions,
     steplength,
-    numberofMetropolisSteps
+    numberofMetropolisSteps,
+    numberofthreads
     );
-    // int numberofthreads;
-    // #pragma omp parallel shared(sampler, numberofthreads)
-    // {
+    //#pragma omp parallel shared(numberofthreads)
+    //{
         for (int i = 0; i < numberofMetropolisSteps; i++)
         {
             bool acceptedStep;
@@ -45,10 +47,11 @@ std::unique_ptr<class Sampler> System::RunMetropolisSteps(
                 acceptedStep = m_solver->Step(steplength, *m_wavefunction, m_particles, j);
             }
             sampler->Sample(acceptedStep, this);
+            //sampler->WriteEnergiestoFile(*this, i+1);
         }
-    // }
+    //}
     sampler->ComputeAverages();
-    sampler->WritetoFile(*this);
+    //sampler->WritetoFile(*this);
 
     return sampler;
 }
@@ -102,11 +105,13 @@ std::unique_ptr<class Sampler> System::FindOptimalParameters(
     arma::vec params = m_wavefunction->getParameters();
     double gradient = 1;
 
+    int numberofthreads = omp_get_max_threads();
     auto sampler = std::make_unique<Sampler>(
         m_numberofparticles,
         m_numberofdimensions,
         steplength,
-        numberofMetropolisSteps
+        numberofMetropolisSteps,
+        numberofthreads
     );
 
     int iterations = 0;

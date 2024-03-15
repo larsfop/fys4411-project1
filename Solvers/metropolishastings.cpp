@@ -3,6 +3,7 @@
 #include "../Particle.h"
 
 #include <iostream>
+#include <iomanip>
 using namespace std;
 
 MetropolisHastings::MetropolisHastings(std::unique_ptr<class Random> rng) : MonteCarlo(std::move(rng)) {}
@@ -44,7 +45,14 @@ bool MetropolisHastings::Step(
     }
 
     double w = wavefunction.w(particles, index, step) * exp(greens);
-    if(m_rng->NextDouble() <= w)
+    double random = m_rng->NextDouble();
+    // cout << "new MC cycle" << endl;
+    // cout << wavefunction.w(particles, index, step) << "  " << exp(greens) << endl;
+    // cout << pos(0) << " " << pos(1) << " " << pos(2) << endl;
+    // cout << qforce(0) << " " << qforce(1) << " " << qforce(2) << endl;
+    // cout << std::fixed << setprecision(10);
+    // cout << random << "  " << w << endl;
+    if(random <= w)
     {
         particles.at(index)->ChangePosition(step);
 

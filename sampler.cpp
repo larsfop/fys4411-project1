@@ -17,17 +17,19 @@ Sampler::Sampler(
     int numberofparticles,
     int numberofdimensions,
     double steplength,
-    int numberofMetropolisSteps
+    int numberofMetropolisSteps,
+    int numberofthreads
 )
 {
     m_stepnumber = 0;
     m_numberofMetropolisSteps = numberofMetropolisSteps;
     m_numberofparticles = numberofparticles;
     m_numberofdimensions = numberofdimensions;
-    m_energy = 0;
+    m_Energy = 0;
     m_DeltaEnergy = 0;
     m_steplength = steplength;
     m_numberofacceptedsteps = 0;
+    m_numberofthreads = numberofthreads;
 
     m_DeltaPsi = arma::vec(2);
     m_PsiEnergyDerivative = arma::vec(2);
@@ -40,7 +42,8 @@ void Sampler::Sample(bool acceptedstep, class System *system)
 {
     auto localenergy = system->ComputeLocalEnergy();
     // cout << localenergy << endl;
-    m_energy += localenergy;
+    m_Energy += localenergy;
+    m_Energy2 += localenergy*localenergy;
     m_stepnumber++;
     m_numberofacceptedsteps += acceptedstep;
 
@@ -51,13 +54,18 @@ void Sampler::Sample(bool acceptedstep, class System *system)
 
 void Sampler::ComputeAverages()
 {
-    m_energy /= m_numberofMetropolisSteps;
+    m_Energy /= m_numberofMetropolisSteps;
+    m_Energy2 /= m_numberofMetropolisSteps;
     m_DeltaPsi /= m_numberofMetropolisSteps;
     m_PsiEnergyDerivative /= m_numberofMetropolisSteps;
+    m_variance = m_Energy2 - m_Energy*m_Energy;
     // m_PsiEnergyDerivative.print();
     // m_DeltaPsi.print();
-    // cout << m_energy << endl;
-    m_EnergyDerivative = 2*(m_PsiEnergyDerivative - m_DeltaPsi*m_energy);
+    // cout << m_Energy << endl;
+    m_EnergyDerivative = 2*(m_PsiEnergyDerivative - m_DeltaPsi*m_Energy);
+
+    //m_stepnumber /= m_numberofthreads;
+    //m_numberofacceptedsteps /= m_numberofthreads;
 }
 
 void Sampler::printOutput(System &system)
@@ -80,7 +88,8 @@ void Sampler::printOutput(System &system)
     }
     cout << endl;
     cout << "  -- Results -- " << endl;
-    cout << " Energy : " << m_energy << endl;
+    cout << " Energy : " << m_Energy << endl;
+    cout << " Variance : " << m_variance << endl;
     cout << endl;
 }
 
@@ -107,8 +116,14 @@ void Sampler::WritetoFile(System &system)
             << setw(width) << m_EnergyDerivative(0)
             << setw(width) << params(1)
             << setw(width) << m_EnergyDerivative(1)
-            << setw(width) << m_energy
+            << setw(width) << m_Energy
             << endl;
-
     ofile.close();
+}
+
+void Sampler::WriteEnergiestoFile(System &system, int iteration)
+{
+    std::ofstream ofile("Energies.dat", std::ofstream::app);
+    ofile << m_Energy/iteration << endl;
+    ofile.close(); 
 }
