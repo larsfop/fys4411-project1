@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <armadillo>
+#include <vector>
 
 class Sampler
 {
@@ -10,9 +11,9 @@ public:
         int numberofparticles,
         int numberofdimensions,
         double steplength,
-        int numberofMetropolisSteps,
-        int numberofthreads
+        int numberofMetropolisSteps
     );
+    Sampler(std::vector<std::unique_ptr<class Sampler>> &samplers);
     void Sample(bool acceptedstep, class System *system);
     void printOutput(class System &system);
     void ComputeAverages();

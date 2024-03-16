@@ -17,8 +17,7 @@ Sampler::Sampler(
     int numberofparticles,
     int numberofdimensions,
     double steplength,
-    int numberofMetropolisSteps,
-    int numberofthreads
+    int numberofMetropolisSteps
 )
 {
     m_stepnumber = 0;
@@ -29,13 +28,48 @@ Sampler::Sampler(
     m_DeltaEnergy = 0;
     m_steplength = steplength;
     m_numberofacceptedsteps = 0;
-    m_numberofthreads = numberofthreads;
 
     m_DeltaPsi = arma::vec(2);
     m_PsiEnergyDerivative = arma::vec(2);
     m_EnergyDerivative = arma::vec(2);
 
     m_Filename = "Results.dat";
+}
+
+Sampler::Sampler(std::vector<std::unique_ptr<class Sampler>> &samplers)
+{
+    int numberofthreads = samplers.size();
+
+    m_numberofMetropolisSteps = samplers[0]->m_numberofMetropolisSteps;
+    m_numberofparticles = samplers[0]->m_numberofparticles;
+    m_numberofdimensions = samplers[0]->m_numberofdimensions;
+    m_steplength = samplers[0]->m_steplength;
+
+    m_Filename = samplers[0]->m_Filename;
+    m_DeltaPsi = arma::vec(2);
+    m_PsiEnergyDerivative = arma::vec(2);
+    for (int i = 0; i < numberofthreads; i++)
+    {
+        m_Energy += samplers[i]->m_Energy;
+        m_Energy2 += samplers[i]->m_Energy2;
+
+        m_DeltaPsi += samplers[i]->m_DeltaPsi;
+        m_PsiEnergyDerivative += samplers[i]->m_PsiEnergyDerivative;
+
+        m_stepnumber += samplers[i]->m_stepnumber;
+        m_numberofacceptedsteps += samplers[i]->m_numberofacceptedsteps; 
+    }
+
+    m_Energy /= m_numberofMetropolisSteps*numberofthreads;
+    m_Energy2 /= m_numberofMetropolisSteps*numberofthreads;
+    m_DeltaPsi /= m_numberofMetropolisSteps*numberofthreads;
+    m_PsiEnergyDerivative /= m_numberofMetropolisSteps*numberofthreads;
+
+    m_variance = m_Energy2 - m_Energy*m_Energy;
+    m_EnergyDerivative = 2*(m_PsiEnergyDerivative - m_DeltaPsi*m_Energy);
+
+    m_stepnumber /= numberofthreads;
+    m_numberofacceptedsteps /= numberofthreads;
 }
 
 void Sampler::Sample(bool acceptedstep, class System *system)

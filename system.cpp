@@ -7,6 +7,7 @@
 #include "Solvers/montecarlo.h"
 
 #include <iostream>
+#include <stdio.h>
 using std::cout;
 using std::endl;
 
@@ -29,16 +30,24 @@ std::unique_ptr<class Sampler> System::RunMetropolisSteps(
 )
 {
     int numberofthreads = omp_get_max_threads();
+    std::vector<std::unique_ptr<class Sampler>> samplers(numberofthreads);
 
-    auto sampler = std::make_unique<Sampler>(
-    m_numberofparticles,
-    m_numberofdimensions,
-    steplength,
-    numberofMetropolisSteps,
-    numberofthreads
-    );
-    //#pragma omp parallel shared(numberofthreads)
-    //{
+    // auto sampler = std::make_unique<Sampler>(
+    // m_numberofparticles,
+    // m_numberofdimensions,
+    // steplength,
+    // numberofMetropolisSteps,
+    // numberofthreads
+    // );
+    #pragma omp parallel
+    {
+        int threadnumber = omp_get_thread_num();
+        auto sampler = std::make_unique<Sampler>(
+            m_numberofparticles,
+            m_numberofdimensions,
+            steplength,
+            numberofMetropolisSteps
+        );
         for (int i = 0; i < numberofMetropolisSteps; i++)
         {
             bool acceptedStep;
@@ -49,8 +58,12 @@ std::unique_ptr<class Sampler> System::RunMetropolisSteps(
             sampler->Sample(acceptedStep, this);
             //sampler->WriteEnergiestoFile(*this, i+1);
         }
-    //}
-    sampler->ComputeAverages();
+        samplers[threadnumber] = std::move(sampler);
+        
+    }
+    std::unique_ptr<class Sampler> sampler = std::make_unique<class Sampler>(samplers);
+            printf("working\n");
+    //sampler->ComputeAverages();
     //sampler->WritetoFile(*this);
 
     return sampler;
@@ -105,13 +118,11 @@ std::unique_ptr<class Sampler> System::FindOptimalParameters(
     arma::vec params = m_wavefunction->getParameters();
     double gradient = 1;
 
-    int numberofthreads = omp_get_max_threads();
     auto sampler = std::make_unique<Sampler>(
         m_numberofparticles,
         m_numberofdimensions,
         steplength,
-        numberofMetropolisSteps,
-        numberofthreads
+        numberofMetropolisSteps
     );
 
     int iterations = 0;

@@ -26,7 +26,7 @@ public:
 
 private:
     double m_alpha;
-    double m_beta = 1.0;
+    double m_beta;
     arma::vec m_beta_z;
     arma::vec m_parameters;
 };

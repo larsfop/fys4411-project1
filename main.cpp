@@ -25,15 +25,15 @@ int main(int argc, const char *argv[])
     int numberofMetropolisSteps = stod(argv[1]);
     int numberofEquilibrationSteps = 1e2;
 
-    double alpha = 0.5;
-    double beta = 1.0;
+    double alpha = atof(argv[5]);
+    double beta = atof(argv[6]);
     double steplength = 0.01;
 
     double eta = 0.1;
     double tol = 1e-7;
     int maxiter = stod(argv[2]); //1e3;
 
-    omp_set_num_threads(2);
+    omp_set_num_threads(atoi(argv[7]));
 
     int width = 20;
     string Filename = "Results.dat";
