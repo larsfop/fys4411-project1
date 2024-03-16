@@ -4,6 +4,7 @@
 #include <vector>
 #include <time.h>
 #include <iomanip>
+#include <stdio.h>
 
 #include "Particle.h"
 #include "Math/random.h"
@@ -53,7 +54,43 @@ int main(int argc, const char *argv[])
     clock_t t1,t2;
 
     t1 = clock();
-    auto rng = std::make_unique<Random>(seed);
+
+    int numberofthreads = omp_get_num_threads();
+    std::vector<std::unique_ptr<class Sampler>> samplers;
+    #pragma omp parallel
+    {
+        int threadnumber = omp_get_thread_num();
+        auto rng = std::make_unique<Random>(seed+threadnumber);
+
+        auto particles = SetupRandomNormalInitialStates(
+            numberofdimensions,
+            numberofparticles,
+            *rng,
+            std::sqrt(steplength)
+        );
+
+        auto system = std::make_unique<System>(
+            std::make_unique<SimpleGaussian>(alpha, beta),
+            std::make_unique<MetropolisHastings>(std::move(rng)),
+            std::move(particles)
+        );
+
+        auto sampler = system->FindOptimalParameters(
+            steplength,
+            numberofMetropolisSteps,
+            eta,
+            tol,
+            maxiter
+        );
+
+        samplers.push_back(std::move(sampler));
+        //samplers[threadnumber] = std::move(sampler);
+        // gives bus error
+    }
+    std::unique_ptr<Sampler> sampler = std::make_unique<class Sampler>(samplers);
+    sampler->printOutput();
+
+    /*auto rng = std::make_unique<Random>(seed);
     // auto particles = SetupRandomUniformInitialState(
     //     numberofdimensions,
     //     numberofparticles,
@@ -88,10 +125,11 @@ int main(int argc, const char *argv[])
     // auto sampler = system->RunMetropolisSteps(
     //     steplength,
     //     numberofMetropolisSteps
-    // );
+    // );*/
+
     t2 = clock();
 
-    sampler->printOutput(*system);
+    // sampler->printOutput(*system);
 
     t_total = t2 - t1;
     double time = ((double) (t_total))/CLOCKS_PER_SEC;

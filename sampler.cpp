@@ -32,6 +32,7 @@ Sampler::Sampler(
     m_DeltaPsi = arma::vec(2);
     m_PsiEnergyDerivative = arma::vec(2);
     m_EnergyDerivative = arma::vec(2);
+    m_params = arma::vec(2);
 
     m_Filename = "Results.dat";
 }
@@ -46,18 +47,25 @@ Sampler::Sampler(std::vector<std::unique_ptr<class Sampler>> &samplers)
     m_steplength = samplers[0]->m_steplength;
 
     m_Filename = samplers[0]->m_Filename;
-    m_DeltaPsi = arma::vec(2);
-    m_PsiEnergyDerivative = arma::vec(2);
-    for (int i = 0; i < numberofthreads; i++)
+    int N_params = samplers[0]->m_params.n_elem;
+    m_DeltaPsi = arma::vec(N_params);
+    m_PsiEnergyDerivative = arma::vec(N_params);
+    m_params = arma::vec(N_params);
+    for (auto &sampler : samplers)
     {
-        m_Energy += samplers[i]->m_Energy;
-        m_Energy2 += samplers[i]->m_Energy2;
+        m_Energy += sampler->m_Energy;
+        m_Energy2 += sampler->m_Energy2;
+        
+        m_DeltaPsi += sampler->m_DeltaPsi;
+        m_PsiEnergyDerivative += sampler->m_PsiEnergyDerivative;
 
-        m_DeltaPsi += samplers[i]->m_DeltaPsi;
-        m_PsiEnergyDerivative += samplers[i]->m_PsiEnergyDerivative;
+        m_stepnumber += sampler->m_stepnumber;
+        m_numberofacceptedsteps += sampler->m_numberofacceptedsteps; 
 
-        m_stepnumber += samplers[i]->m_stepnumber;
-        m_numberofacceptedsteps += samplers[i]->m_numberofacceptedsteps; 
+        for (int i = 0; i < N_params; i++)
+        {
+            m_params(i) += sampler->m_params(i);
+        }
     }
 
     m_Energy /= m_numberofMetropolisSteps*numberofthreads;
@@ -70,6 +78,8 @@ Sampler::Sampler(std::vector<std::unique_ptr<class Sampler>> &samplers)
 
     m_stepnumber /= numberofthreads;
     m_numberofacceptedsteps /= numberofthreads;
+
+    m_params /= numberofthreads;
 }
 
 void Sampler::Sample(bool acceptedstep, class System *system)
@@ -127,6 +137,28 @@ void Sampler::printOutput(System &system)
     cout << endl;
 }
 
+void Sampler::printOutput()
+{
+cout << endl;
+    cout << "  -- System info -- " << endl;
+    cout << " Number of particles  : " << m_numberofparticles << endl;
+    cout << " Number of dimensions : " << m_numberofdimensions << endl;
+    cout << " Number of Metropolis steps run : 10^" << std::log10(m_numberofMetropolisSteps) << endl;
+    cout << " Step length used : " << m_steplength << endl;
+    cout << " Ratio of accepted steps: " << ((double) m_numberofacceptedsteps) / ((double) m_numberofMetropolisSteps) << endl;
+    cout << endl;
+    cout << "  -- Wave function parameters -- " << endl;
+    cout << " Number of parameters : " << m_params.n_elem << endl;
+    for (unsigned int i=0; i < m_params.n_elem; i++) {
+        cout << " Parameter " << i+1 << " : " << m_params(i) << endl;
+    }
+    cout << endl;
+    cout << "  -- Results -- " << endl;
+    cout << " Energy : " << m_Energy << endl;
+    cout << " Variance : " << m_variance << endl;
+    cout << endl;
+}
+
 void Sampler::CreateFile()
 {
     int width = 20;
@@ -160,4 +192,9 @@ void Sampler::WriteEnergiestoFile(System &system, int iteration)
     std::ofstream ofile("Energies.dat", std::ofstream::app);
     ofile << m_Energy/iteration << endl;
     ofile.close(); 
+}
+
+void Sampler::setParameters(double alpha, double beta)
+{
+    m_params = {alpha, beta};
 }

@@ -29,8 +29,8 @@ std::unique_ptr<class Sampler> System::RunMetropolisSteps(
     int numberofMetropolisSteps
 )
 {
-    int numberofthreads = omp_get_max_threads();
-    std::vector<std::unique_ptr<class Sampler>> samplers(numberofthreads);
+    //int numberofthreads = omp_get_max_threads();
+    //std::vector<std::unique_ptr<class Sampler>> samplers(numberofthreads);
 
     // auto sampler = std::make_unique<Sampler>(
     // m_numberofparticles,
@@ -39,30 +39,29 @@ std::unique_ptr<class Sampler> System::RunMetropolisSteps(
     // numberofMetropolisSteps,
     // numberofthreads
     // );
-    #pragma omp parallel
+    //#pragma omp parallel
+    //{
+    //int threadnumber = omp_get_thread_num();
+    auto sampler = std::make_unique<Sampler>(
+        m_numberofparticles,
+        m_numberofdimensions,
+        steplength,
+        numberofMetropolisSteps
+    );
+    for (int i = 0; i < numberofMetropolisSteps; i++)
     {
-        int threadnumber = omp_get_thread_num();
-        auto sampler = std::make_unique<Sampler>(
-            m_numberofparticles,
-            m_numberofdimensions,
-            steplength,
-            numberofMetropolisSteps
-        );
-        for (int i = 0; i < numberofMetropolisSteps; i++)
+        bool acceptedStep;
+        for (int j = 0; j < m_numberofparticles; j++)
         {
-            bool acceptedStep;
-            for (int j = 0; j < m_numberofparticles; j++)
-            {
-                acceptedStep = m_solver->Step(steplength, *m_wavefunction, m_particles, j);
-            }
-            sampler->Sample(acceptedStep, this);
-            //sampler->WriteEnergiestoFile(*this, i+1);
+            acceptedStep = m_solver->Step(steplength, *m_wavefunction, m_particles, j);
         }
-        samplers[threadnumber] = std::move(sampler);
-        
+        sampler->Sample(acceptedStep, this);
+        //sampler->WriteEnergiestoFile(*this, i+1);
     }
-    std::unique_ptr<class Sampler> sampler = std::make_unique<class Sampler>(samplers);
-            printf("working\n");
+        //samplers[threadnumber] = std::move(sampler);
+        
+    //}
+    //std::unique_ptr<class Sampler> sampler = std::make_unique<class Sampler>(samplers);
     //sampler->ComputeAverages();
     //sampler->WritetoFile(*this);
 
@@ -128,7 +127,7 @@ std::unique_ptr<class Sampler> System::FindOptimalParameters(
     int iterations = 0;
     while (gradient > tolerance && iterations < maxiterations)
     {
-        cout << "Iteration : " << iterations+1 << endl;
+        //cout << "Iteration : " << iterations+1 << endl;
         sampler = this->RunMetropolisSteps(steplength, numberofMetropolisSteps);
         auto energyderivatives = sampler->getEnergyDerivatives();
 
@@ -136,12 +135,13 @@ std::unique_ptr<class Sampler> System::FindOptimalParameters(
         for (int i = 0; i < nparams; i++)
         {
             params(i) -= learningrate*energyderivatives(i)/m_numberofparticles;
-            cout << "Parameter " << i+1 << " : " << params(i) << endl;
-            cout << "EnergyDerivative " << i+1 << " : " << energyderivatives(i) << endl;
+            // cout << "Parameter " << i+1 << " : " << params(i) << endl;
+            // cout << "EnergyDerivative " << i+1 << " : " << energyderivatives(i) << endl;
             gradient += std::abs(energyderivatives(i));
         }
         
         m_wavefunction->ChangeParameters(params(0), params(1));
+        sampler->setParameters(params(0), params(1));
         for (int i = 0; i < m_numberofparticles; i++)
         {
             m_particles[i]->ResetPosition();
@@ -149,6 +149,6 @@ std::unique_ptr<class Sampler> System::FindOptimalParameters(
 
         iterations++;
     }
-    cout << "Max iterations : " << iterations << endl;
+    //cout << "Max iterations : " << iterations << endl;
     return sampler;
 }
