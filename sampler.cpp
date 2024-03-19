@@ -25,6 +25,7 @@ Sampler::Sampler(
     m_numberofparticles = numberofparticles;
     m_numberofdimensions = numberofdimensions;
     m_Energy = 0;
+    m_Energy2 = 0;
     m_DeltaEnergy = 0;
     m_steplength = steplength;
     m_numberofacceptedsteps = 0;
@@ -45,6 +46,11 @@ Sampler::Sampler(std::vector<std::unique_ptr<class Sampler>> &samplers)
     m_numberofparticles = samplers[0]->m_numberofparticles;
     m_numberofdimensions = samplers[0]->m_numberofdimensions;
     m_steplength = samplers[0]->m_steplength;
+
+    m_Energy = 0;
+    m_Energy2 = 0;
+    m_numberofacceptedsteps = 0;
+    m_stepnumber = 0;
 
     m_Filename = samplers[0]->m_Filename;
     int N_params = samplers[0]->m_params.n_elem;
@@ -73,6 +79,7 @@ Sampler::Sampler(std::vector<std::unique_ptr<class Sampler>> &samplers)
     m_DeltaPsi /= m_numberofMetropolisSteps*numberofthreads;
     m_PsiEnergyDerivative /= m_numberofMetropolisSteps*numberofthreads;
 
+    cout << m_Energy2 << " " << m_Energy << endl;
     m_variance = m_Energy2 - m_Energy*m_Energy;
     m_EnergyDerivative = 2*(m_PsiEnergyDerivative - m_DeltaPsi*m_Energy);
 
@@ -94,6 +101,17 @@ void Sampler::Sample(bool acceptedstep, class System *system)
     arma::vec dparams = system->ComputeDerivatives();
     m_DeltaPsi += dparams;
     m_PsiEnergyDerivative += dparams*localenergy;
+
+    m_params = system->getParameters();
+}
+
+void Sampler::ComputeDerivatives()
+{
+    double Energy = m_Energy/m_numberofMetropolisSteps;
+    arma::vec DeltaPsi = m_DeltaPsi/m_numberofMetropolisSteps;
+    arma::vec PsiEnergyDerivative = m_PsiEnergyDerivative/m_numberofMetropolisSteps;
+
+    m_EnergyDerivative = 2*(PsiEnergyDerivative - DeltaPsi*Energy);
 }
 
 void Sampler::ComputeAverages()
@@ -139,7 +157,7 @@ void Sampler::printOutput(System &system)
 
 void Sampler::printOutput()
 {
-cout << endl;
+    cout << endl;
     cout << "  -- System info -- " << endl;
     cout << " Number of particles  : " << m_numberofparticles << endl;
     cout << " Number of dimensions : " << m_numberofdimensions << endl;

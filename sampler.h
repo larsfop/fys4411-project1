@@ -17,6 +17,7 @@ public:
     void Sample(bool acceptedstep, class System *system);
     void printOutput(class System &system);
     void printOutput();
+    void ComputeDerivatives();
     void ComputeAverages();
     double getEnergy() {return m_Energy; };
     arma::vec getEnergyDerivatives() {return m_EnergyDerivative; };

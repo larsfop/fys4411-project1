@@ -9,6 +9,7 @@
 #include "Particle.h"
 #include "Math/random.h"
 #include "WaveFunctions/simplegaussian.h"
+#include "WaveFunctions/interactinggaussian.h"
 #include "InitialState/initialstate.h"
 #include "Solvers/metropolis.h"
 #include "Solvers/metropolishastings.h"
@@ -24,11 +25,15 @@ int main(int argc, const char *argv[])
     int numberofdimensions = atoi(argv[4]);
     int numberofparticles = atoi(argv[3]);
     int numberofMetropolisSteps = stod(argv[1]);
-    int numberofEquilibrationSteps = 1e2;
+    int numberofEquilibrationSteps = 1e5;
 
     double alpha = atof(argv[5]);
     double beta = atof(argv[6]);
+    //beta = 2.82843;
     double steplength = 0.01;
+
+    double a = 0.0043;
+    double gamma = beta;
 
     double eta = 0.1;
     double tol = 1e-7;
@@ -70,18 +75,28 @@ int main(int argc, const char *argv[])
         );
 
         auto system = std::make_unique<System>(
-            std::make_unique<SimpleGaussian>(alpha, beta),
+            std::make_unique<SimpleGaussian>(alpha, beta, a, gamma),
             std::make_unique<MetropolisHastings>(std::move(rng)),
             std::move(particles)
         );
 
-        auto sampler = system->FindOptimalParameters(
+        auto acceptedEquilibrationSteps = system->RunEquilibrationSteps(
             steplength,
-            numberofMetropolisSteps,
-            eta,
-            tol,
-            maxiter
+            numberofEquilibrationSteps
         );
+
+        auto sampler = system->RunMetropolisSteps(
+            steplength,
+            numberofMetropolisSteps
+        );
+
+        // auto sampler = system->FindOptimalParameters(
+        //     steplength,
+        //     numberofMetropolisSteps,
+        //     eta,
+        //     tol,
+        //     maxiter
+        // );
 
         samplers.push_back(std::move(sampler));
         //samplers[threadnumber] = std::move(sampler);

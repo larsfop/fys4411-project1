@@ -62,6 +62,7 @@ std::unique_ptr<class Sampler> System::RunMetropolisSteps(
         
     //}
     //std::unique_ptr<class Sampler> sampler = std::make_unique<class Sampler>(samplers);
+    sampler->ComputeDerivatives();
     //sampler->ComputeAverages();
     //sampler->WritetoFile(*this);
 
@@ -79,6 +80,11 @@ int System::RunEquilibrationSteps(
         {
             acceptedSteps += m_solver->Step(stepLength, *m_wavefunction, m_particles, j);
         }
+    }
+
+    for (int i = 0; i < m_numberofparticles; i++)
+    {
+        m_particles[i]->SetEquilibrationPositions();
     }
 
     return acceptedSteps;
@@ -129,14 +135,14 @@ std::unique_ptr<class Sampler> System::FindOptimalParameters(
     {
         //cout << "Iteration : " << iterations+1 << endl;
         sampler = this->RunMetropolisSteps(steplength, numberofMetropolisSteps);
-        auto energyderivatives = sampler->getEnergyDerivatives();
+        arma::vec energyderivatives = sampler->getEnergyDerivatives();
 
         gradient = 0;
         for (int i = 0; i < nparams; i++)
         {
             params(i) -= learningrate*energyderivatives(i)/m_numberofparticles;
-            // cout << "Parameter " << i+1 << " : " << params(i) << endl;
-            // cout << "EnergyDerivative " << i+1 << " : " << energyderivatives(i) << endl;
+            //cout << "Parameter " << i+1 << " : " << params(i) << endl;
+            //cout << "EnergyDerivative " << i+1 << " : " << energyderivatives(i) << endl;
             gradient += std::abs(energyderivatives(i));
         }
         
@@ -144,7 +150,7 @@ std::unique_ptr<class Sampler> System::FindOptimalParameters(
         sampler->setParameters(params(0), params(1));
         for (int i = 0; i < m_numberofparticles; i++)
         {
-            m_particles[i]->ResetPosition();
+            m_particles[i]->SetPositionsToEquilibration();
         }
 
         iterations++;

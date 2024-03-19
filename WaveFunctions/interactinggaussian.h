@@ -1,20 +1,21 @@
-#pragma once
 
 #include <memory>
 #include "WaveFunctions.h"
 #include "../Particle.h"
 
-class SimpleGaussian : public WaveFunction
+class InteractingGaussian : public WaveFunction
 {
 public:
-    SimpleGaussian(
-        const double alpha,
-        double beta,
-        double a,
-        double gamma
-        );
+    InteractingGaussian(
+        const double alpha, 
+        const double beta, 
+        const double a,
+        const double gamma
+    );
     double Wavefunction(std::vector<std::unique_ptr<class Particle>> &particles);
-    double DoubleDerivative(std::vector<std::unique_ptr<class Particle>> &particles);
+    double DoubleDerivative(
+        std::vector<std::unique_ptr<class Particle>> &particles
+    );
     double LocalEnergy(std::vector<std::unique_ptr<class Particle>> &particles);
     arma::vec QuantumForce(std::vector<std::unique_ptr<class Particle>> &particles, const int index);
     double w(std::vector<std::unique_ptr<class Particle>> &particles, const int index, const arma::vec step);
@@ -26,11 +27,14 @@ public:
         const int index,
         const arma::vec Step
     );
-    double geta() {return 0; };
+    double geta() {return m_a; };
 
 private:
     double m_alpha;
     double m_beta;
+    double m_a;
+    double m_gamma;
     arma::vec m_beta_z;
+    arma::vec m_gamma_z;
     arma::vec m_parameters;
 };

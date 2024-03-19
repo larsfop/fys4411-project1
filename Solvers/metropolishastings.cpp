@@ -36,6 +36,29 @@ bool MetropolisHastings::Step(
         //step.push_back(sqrt_dt*m_rng->NextGaussian() + qforce(i)*stepsize*D);
         // qforcenew(i) += step(i);
     }
+
+    double a = wavefunction.geta();
+    for (int i = 0; i < index; i++)
+    {
+        arma::vec posi = particles[i]->getPosition();
+        double dr = arma::norm((pos+step) - posi);
+        
+        if (dr <= a)
+        {
+            return false;
+        }
+    }
+    for (int i = index+1; i < numberofparticles; i++)
+    {
+        arma::vec posi = particles[i]->getPosition();
+        double dr = arma::norm((pos+step) - posi);
+        
+        if (dr <= a)
+        {
+            return false;
+        }
+    }
+
     arma::vec qforcenew = wavefunction.QuantumForce(particles, index, step);
     double greens = 0;
     for (int i = 0; i < numberofdimensions; i++)
