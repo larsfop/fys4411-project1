@@ -5,6 +5,7 @@
 #include <time.h>
 #include <iomanip>
 #include <stdio.h>
+#include <chrono>
 
 #include "Particle.h"
 #include "Math/random.h"
@@ -56,9 +57,10 @@ int main(int argc, const char *argv[])
     ofile.close();
 
     double t_total;
-    clock_t t1,t2;
+    //clock_t t1,t2;
 
-    t1 = clock();
+    //t1 = clock();
+    auto t1 = std::chrono::system_clock::now();
 
     int numberofthreads = omp_get_num_threads();
     std::vector<std::unique_ptr<class Sampler>> samplers;
@@ -75,7 +77,7 @@ int main(int argc, const char *argv[])
         );
 
         auto system = std::make_unique<System>(
-            std::make_unique<SimpleGaussian>(alpha, beta, a, gamma),
+            std::make_unique<InteractingGaussian>(alpha, beta),
             std::make_unique<MetropolisHastings>(std::move(rng)),
             std::move(particles)
         );
@@ -142,13 +144,18 @@ int main(int argc, const char *argv[])
     //     numberofMetropolisSteps
     // );*/
 
-    t2 = clock();
+    //t2 = clock();
+    auto t2 = std::chrono::system_clock::now();
+
+    std::chrono::duration<double> time = t2 - t1;
+    cout << fixed << setprecision(3) << endl;
+    cout << "Time : " << time.count() << " seconds" << endl;
 
     // sampler->printOutput(*system);
 
-    t_total = t2 - t1;
-    double time = ((double) (t_total))/CLOCKS_PER_SEC;
-    cout << "Time : " << time << endl;
+    // t_total = t2 - t1;
+    // double time = ((double) (t_total))/CLOCKS_PER_SEC;
+    // cout << "Time : " << time << endl;
 
     return 0;
 }

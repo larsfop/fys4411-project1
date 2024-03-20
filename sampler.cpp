@@ -79,7 +79,6 @@ Sampler::Sampler(std::vector<std::unique_ptr<class Sampler>> &samplers)
     m_DeltaPsi /= m_numberofMetropolisSteps*numberofthreads;
     m_PsiEnergyDerivative /= m_numberofMetropolisSteps*numberofthreads;
 
-    cout << m_Energy2 << " " << m_Energy << endl;
     m_variance = m_Energy2 - m_Energy*m_Energy;
     m_EnergyDerivative = 2*(m_PsiEnergyDerivative - m_DeltaPsi*m_Energy);
 

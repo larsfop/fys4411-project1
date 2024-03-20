@@ -6,18 +6,15 @@ using namespace std;
 
 InteractingGaussian::InteractingGaussian(
     const double alpha, 
-    const double beta,
-    const double a,
-    const double gamma
+    const double beta
 )
 {
     m_alpha = alpha;
     m_beta = beta;
-    m_a = a;
+    m_a = 0.0043;
     m_parameters = {alpha, beta};
     m_beta_z = {1.0, 1.0, beta};
-    m_gamma = gamma;
-    m_gamma_z = {1, 1, gamma};
+    m_gamma_z = {1, 1, beta};
 }
 
 
@@ -34,7 +31,7 @@ double InteractingGaussian::Wavefunction(std::vector<std::unique_ptr<class Parti
         {
             arma::vec posj = particles[j]->getPosition();
             double rij = arma::norm(pos - posj);
-            f *= (1 - m_a/rij) * (rij > m_a);
+            f *= (1 - m_a/rij);
         }
         for (int j = 0; j < numberofdimensions; j++)
         {
@@ -52,7 +49,6 @@ double InteractingGaussian::DoubleDerivative(
     int numberofparticles = particles.size();
     double d2phi = 0;
     double alpha2 = m_alpha*m_alpha;
-    arma::vec v(numberofdimensions);
     double term1 = 0;
     double term2 = 0;
     double term3 = 0;
@@ -72,6 +68,7 @@ double InteractingGaussian::DoubleDerivative(
         // Calculate the double and single derivative of phi, divided by phi
         arma::vec posj(numberofdimensions);
         arma::vec dphi(numberofdimensions);
+        arma::vec v(numberofdimensions);
         for (int j = 0; j < numberofdimensions; j++)
         {
             d2phi += 4*alpha2*r2(j);
@@ -217,7 +214,7 @@ double InteractingGaussian::w(std::vector<std::unique_ptr<class Particle>> &part
 
         interaction *= (1 - m_a/rki_n)/(1 - m_a/rki_o);
     }
-    return std::exp(-2*m_alpha*dr2)*interaction;
+    return std::exp(-2*m_alpha*dr2)*interaction*interaction;
 }
 
 // Take the derivative of the the wavefunction as a function of the parameters alpha, beta

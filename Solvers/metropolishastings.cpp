@@ -18,7 +18,7 @@ bool MetropolisHastings::Step(
     double sqrt_dt = sqrt(stepsize);
     int numberofparticles = particles.size();
     int numberofdimensions = particles[0]->getNumberofDimensions();
-    //int index = m_rng->NextInt(numberofparticles-1);
+    index = m_rng->NextInt(numberofparticles-1);
     //int index = 0;
     double D = 0.5;
 

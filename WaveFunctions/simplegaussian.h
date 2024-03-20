@@ -9,9 +9,7 @@ class SimpleGaussian : public WaveFunction
 public:
     SimpleGaussian(
         const double alpha,
-        double beta,
-        double a,
-        double gamma
+        double beta
         );
     double Wavefunction(std::vector<std::unique_ptr<class Particle>> &particles);
     double DoubleDerivative(std::vector<std::unique_ptr<class Particle>> &particles);

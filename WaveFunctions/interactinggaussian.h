@@ -8,9 +8,7 @@ class InteractingGaussian : public WaveFunction
 public:
     InteractingGaussian(
         const double alpha, 
-        const double beta, 
-        const double a,
-        const double gamma
+        const double beta
     );
     double Wavefunction(std::vector<std::unique_ptr<class Particle>> &particles);
     double DoubleDerivative(

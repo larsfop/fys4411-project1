@@ -23,8 +23,6 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g")
 # Add full compiler optimization when in the release build type. Other options include
 # -O0, -O1, -O2.
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
-# Profiling
-# set(CMAKE_CXX_FLAGS "-pg")
 
 # Add directories containing header-files
 include_directories(

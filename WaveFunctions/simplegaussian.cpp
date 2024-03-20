@@ -8,9 +8,7 @@ using namespace std;
 
 SimpleGaussian::SimpleGaussian(
     const double alpha,
-    double beta,
-    double a,
-    double gamma
+    double beta
 )
 {
     m_alpha = alpha;
