@@ -78,7 +78,7 @@ double SimpleGaussian::LocalEnergy(std::vector<std::unique_ptr<class Particle>> 
     }
 
     // E_L = alpha(2 + beta) + r^2(1 - 4alpha)
-    return 0.5*(-kinetic + potential)/numberofdimensions;
+    return 0.5*(-kinetic + potential);
 }
 
 arma::vec SimpleGaussian::QuantumForce(

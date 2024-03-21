@@ -19,31 +19,36 @@
 
 using namespace std;
 
+// Profiling shows more than half the time running is spent computing 
+// the double derivative for the interacting case, especially for many particles
+
 int main(int argc, const char *argv[])
 {
     int seed = 1234;
 
-    int numberofdimensions = atoi(argv[4]);
-    int numberofparticles = atoi(argv[3]);
-    int numberofMetropolisSteps = stod(argv[1]);
+    // Number of MonteCarlo steps given in binary powers
+    // i.e. = 2^{terminal input}
+    int numberofMetropolisSteps = 1 << atoi(argv[1]);
+    // int numberofMetropolisSteps = stod(argv[1]);
+    int numberofparticles = atoi(argv[2]);
+    int numberofdimensions = atoi(argv[3]);
     int numberofEquilibrationSteps = 1e5;
 
-    double alpha = atof(argv[5]);
-    double beta = atof(argv[6]);
-    //beta = 2.82843;
+    double alpha = atof(argv[4]);
+    double beta = atof(argv[5]);
     double steplength = 0.01;
-
-    double a = 0.0043;
-    double gamma = beta;
 
     double eta = 0.1;
     double tol = 1e-7;
-    int maxiter = stod(argv[2]); //1e3;
+    int maxiter = 1e3;
 
-    omp_set_num_threads(atoi(argv[7]));
+    bool OptimizeForParameters = false;
 
+    omp_set_num_threads(atoi(argv[6]));
+
+    string Path = "Outputs/";
     int width = 20;
-    string Filename = "Results.dat";
+    string Filename = Path + argv[7] + ".dat";
     ofstream outfile(Filename);
     outfile << setw(width-8) << "alpha"
             << setw(width) << "dalpha"
@@ -56,13 +61,8 @@ int main(int argc, const char *argv[])
     std::ofstream ofile("Energies.dat");
     ofile.close();
 
-    double t_total;
-    //clock_t t1,t2;
-
-    //t1 = clock();
     auto t1 = std::chrono::system_clock::now();
 
-    int numberofthreads = omp_get_num_threads();
     std::vector<std::unique_ptr<class Sampler>> samplers;
     #pragma omp parallel
     {
@@ -87,22 +87,26 @@ int main(int argc, const char *argv[])
             numberofEquilibrationSteps
         );
 
-        auto sampler = system->RunMetropolisSteps(
-            steplength,
-            numberofMetropolisSteps
-        );
-
-        // auto sampler = system->FindOptimalParameters(
-        //     steplength,
-        //     numberofMetropolisSteps,
-        //     eta,
-        //     tol,
-        //     maxiter
-        // );
+        std::unique_ptr<Sampler> sampler;
+        if (OptimizeForParameters)
+        {
+            sampler = system->FindOptimalParameters(
+                steplength,
+                numberofMetropolisSteps,
+                eta,
+                tol,
+                maxiter
+            );
+        }
+        else
+        {
+            sampler = system->RunMetropolisSteps(
+                steplength,
+                numberofMetropolisSteps
+            ); 
+        }
 
         samplers.push_back(std::move(sampler));
-        //samplers[threadnumber] = std::move(sampler);
-        // gives bus error
     }
     std::unique_ptr<Sampler> sampler = std::make_unique<class Sampler>(samplers);
     sampler->printOutput();
@@ -144,7 +148,6 @@ int main(int argc, const char *argv[])
     //     numberofMetropolisSteps
     // );*/
 
-    //t2 = clock();
     auto t2 = std::chrono::system_clock::now();
 
     std::chrono::duration<double> time = t2 - t1;
@@ -152,10 +155,6 @@ int main(int argc, const char *argv[])
     cout << "Time : " << time.count() << " seconds" << endl;
 
     // sampler->printOutput(*system);
-
-    // t_total = t2 - t1;
-    // double time = ((double) (t_total))/CLOCKS_PER_SEC;
-    // cout << "Time : " << time << endl;
 
     return 0;
 }

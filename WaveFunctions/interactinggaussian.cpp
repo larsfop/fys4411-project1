@@ -2,6 +2,8 @@
 #include "interactinggaussian.h"
 
 #include <iostream>
+#include <iomanip>
+#include <chrono>
 using namespace std;
 
 InteractingGaussian::InteractingGaussian(
@@ -31,7 +33,7 @@ double InteractingGaussian::Wavefunction(std::vector<std::unique_ptr<class Parti
         {
             arma::vec posj = particles[j]->getPosition();
             double rij = arma::norm(pos - posj);
-            f *= (1 - m_a/rij);
+            f *= std::max(1 - m_a/rij, 0.0);
         }
         for (int j = 0; j < numberofdimensions; j++)
         {
@@ -53,10 +55,12 @@ double InteractingGaussian::DoubleDerivative(
     double term2 = 0;
     double term3 = 0;
 
+    auto t1 = std::chrono::system_clock::now();
+
     double constant = 0;
     for (int i = 0; i < numberofdimensions; i++)
     {
-        constant += m_gamma_z(i);
+        constant += m_beta_z(i);
     }
     constant *= 2*m_alpha*numberofparticles;
 
@@ -108,6 +112,10 @@ double InteractingGaussian::DoubleDerivative(
             term2 += v(j)*v(j);
         }
     }
+    auto t2 = std::chrono::system_clock::now();
+    std::chrono::duration<double> time = t2 - t1;
+    //cout << fixed << setprecision(3);
+    //cout << "time : " << time.count() << " seconds" << endl;
     return d2phi - constant + 2*term1 + term2 + term3;
 }
 
@@ -116,16 +124,13 @@ double InteractingGaussian::LocalEnergy(std::vector<std::unique_ptr<class Partic
     int numberofparticles = particles.size();
     int numberofdimensions = particles[0]->getNumberofDimensions();
     double kinetic = DoubleDerivative(particles);
-    arma::vec gamma_z = {1, 1, m_gamma};
-    //cout << m_gamma << endl;
-    //gamma_z.print();
     double potential = 0;
     for (int i = 0; i < numberofparticles; i++)
     {
         arma::vec pos = particles[i]->getPosition();
-        potential += arma::sum(arma::square(pos%gamma_z));
+        potential += arma::sum(arma::square(pos%m_gamma_z));
     }
-    return 0.5*(-kinetic + potential)/numberofdimensions;
+    return 0.5*(-kinetic + potential);
 }
 
 arma::vec InteractingGaussian::QuantumForce(
@@ -137,22 +142,22 @@ arma::vec InteractingGaussian::QuantumForce(
     int numberofparticles = particles.size();
     arma::vec pos = particles[index]->getPosition();
     arma::vec qforce = pos % m_beta_z;
-    double up = 0;
+    arma::vec up(numberofdimensions);
     for (int j = 0; j < index; j++)
     {
         arma::vec posj = particles[j]->getPosition();
         double rkj = arma::norm(pos - posj);
 
-        up += m_a/(rkj*(rkj - m_a));
+        up -= (pos - posj)/(rkj*(rkj - m_a)*(rkj - m_a));
     }
     for (int j = index+1; j < numberofparticles; j++)
     {
         arma::vec posj = particles[j]->getPosition();
         double rkj = arma::norm(pos - posj);
 
-        up += m_a/(rkj*(rkj - m_a));
+        up -= (pos - posj)/(rkj*(rkj - m_a)*(rkj - m_a));
     }
-    return -4*m_alpha*qforce + 2*up;
+    return -4*m_alpha*qforce + 2*m_a*up;
 }
 
 arma::vec InteractingGaussian::QuantumForce(
@@ -165,22 +170,22 @@ arma::vec InteractingGaussian::QuantumForce(
     int numberofparticles = particles.size();
     arma::vec pos = particles[index]->getPosition();
     arma::vec qforce = pos%m_beta_z + Step;
-    double up = 0;
+    arma::vec up(numberofdimensions);
     for (int j = 0; j < index; j++)
     {
         arma::vec posj = particles[j]->getPosition();
         double rkj = arma::norm(pos + Step - posj);
 
-        up += m_a/(rkj*(rkj - m_a));
+        up -= (pos - posj)/(rkj*(rkj - m_a)*(rkj - m_a));
     }
     for (int j = index+1; j < numberofparticles; j++)
     {
         arma::vec posj = particles[j]->getPosition();
         double rkj = arma::norm(pos + Step - posj);
 
-        up += m_a/(rkj*(rkj - m_a));
+        up -= (pos - posj)/(rkj*(rkj - m_a)*(rkj - m_a));
     }
-    return -4*m_alpha*qforce + 2*up;
+    return -4*m_alpha*qforce + 2*m_a*up;
 }
 
 double InteractingGaussian::w(std::vector<std::unique_ptr<class Particle>> &particles,
@@ -204,7 +209,7 @@ double InteractingGaussian::w(std::vector<std::unique_ptr<class Particle>> &part
         double rki_n = arma::norm(pos + step - posi);
         double rki_o = arma::norm(pos - posi);
 
-        interaction *= (1 - m_a/rki_n)/(1 - m_a/rki_o);
+        interaction *= std::max(1 - m_a/rki_n, 0.0)/std::max(1 - m_a/rki_o, 0.0);
     }
     for (int i = index+1; i < numberofparticles; i++)
     {
@@ -212,7 +217,14 @@ double InteractingGaussian::w(std::vector<std::unique_ptr<class Particle>> &part
         double rki_n = arma::norm(pos + step - posi);
         double rki_o = arma::norm(pos - posi);
 
-        interaction *= (1 - m_a/rki_n)/(1 - m_a/rki_o);
+        if (rki_o<0)
+        {
+            interaction *= 1e6;
+        }
+        else
+        {
+            interaction *= std::max(1 - m_a/rki_n, 0.0)/std::max(1 - m_a/rki_o, 0.0);
+        }
     }
     return std::exp(-2*m_alpha*dr2)*interaction*interaction;
 }

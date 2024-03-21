@@ -29,40 +29,24 @@ std::unique_ptr<class Sampler> System::RunMetropolisSteps(
     int numberofMetropolisSteps
 )
 {
-    //int numberofthreads = omp_get_max_threads();
-    //std::vector<std::unique_ptr<class Sampler>> samplers(numberofthreads);
-
-    // auto sampler = std::make_unique<Sampler>(
-    // m_numberofparticles,
-    // m_numberofdimensions,
-    // steplength,
-    // numberofMetropolisSteps,
-    // numberofthreads
-    // );
-    //#pragma omp parallel
-    //{
-    //int threadnumber = omp_get_thread_num();
     auto sampler = std::make_unique<Sampler>(
         m_numberofparticles,
         m_numberofdimensions,
         steplength,
         numberofMetropolisSteps
     );
-    int j = 0;
+    //int j = 0;
     for (int i = 0; i < numberofMetropolisSteps; i++)
     {
         bool acceptedStep;
-        //for (int j = 0; j < m_numberofparticles; j++)
-        //{
+        for (int j = 0; j < m_numberofparticles; j++)
+        {
             acceptedStep = m_solver->Step(steplength, *m_wavefunction, m_particles, j);
-        //}
+        }
         sampler->Sample(acceptedStep, this);
         //sampler->WriteEnergiestoFile(*this, i+1);
     }
-        //samplers[threadnumber] = std::move(sampler);
         
-    //}
-    //std::unique_ptr<class Sampler> sampler = std::make_unique<class Sampler>(samplers);
     sampler->ComputeDerivatives();
     //sampler->ComputeAverages();
     //sampler->WritetoFile(*this);
