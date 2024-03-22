@@ -32,7 +32,6 @@ Sampler::Sampler(
 
     m_DeltaPsi = arma::vec(2);
     m_PsiEnergyDerivative = arma::vec(2);
-    m_EnergyDerivative = arma::vec(2);
     m_params = arma::vec(2);
 
     m_Filename = "Results.dat";
@@ -40,7 +39,7 @@ Sampler::Sampler(
 
 Sampler::Sampler(std::vector<std::unique_ptr<class Sampler>> &samplers)
 {
-    int numberofthreads = samplers.size();
+    m_numberofthreads = samplers.size();
 
     m_numberofMetropolisSteps = samplers[0]->m_numberofMetropolisSteps;
     m_numberofparticles = samplers[0]->m_numberofparticles;
@@ -74,24 +73,23 @@ Sampler::Sampler(std::vector<std::unique_ptr<class Sampler>> &samplers)
         }
     }
 
-    m_Energy /= m_numberofMetropolisSteps*numberofthreads;
-    m_Energy2 /= m_numberofMetropolisSteps*numberofthreads;
-    m_DeltaPsi /= m_numberofMetropolisSteps*numberofthreads;
-    m_PsiEnergyDerivative /= m_numberofMetropolisSteps*numberofthreads;
+    m_Energy /= m_numberofMetropolisSteps*m_numberofthreads*m_numberofparticles;
+    m_Energy2 /= m_numberofMetropolisSteps*m_numberofthreads*m_numberofparticles*m_numberofparticles;
+    m_DeltaPsi /= m_numberofMetropolisSteps*m_numberofthreads;
+    m_PsiEnergyDerivative /= m_numberofMetropolisSteps*m_numberofthreads;
 
     m_variance = m_Energy2 - m_Energy*m_Energy;
     m_EnergyDerivative = 2*(m_PsiEnergyDerivative - m_DeltaPsi*m_Energy);
 
-    m_stepnumber /= numberofthreads;
-    m_numberofacceptedsteps /= numberofthreads;
+    m_stepnumber /= m_numberofthreads;
+    m_numberofacceptedsteps /= m_numberofthreads;
 
-    m_params /= numberofthreads;
+    m_params /= m_numberofthreads;
 }
 
 void Sampler::Sample(bool acceptedstep, class System *system)
 {
     auto localenergy = system->ComputeLocalEnergy();
-    // cout << localenergy << endl;
     m_Energy += localenergy;
     m_Energy2 += localenergy*localenergy;
     m_stepnumber++;
@@ -120,9 +118,6 @@ void Sampler::ComputeAverages()
     m_DeltaPsi /= m_numberofMetropolisSteps;
     m_PsiEnergyDerivative /= m_numberofMetropolisSteps;
     m_variance = m_Energy2 - m_Energy*m_Energy;
-    // m_PsiEnergyDerivative.print();
-    // m_DeltaPsi.print();
-    // cout << m_Energy << endl;
     m_EnergyDerivative = 2*(m_PsiEnergyDerivative - m_DeltaPsi*m_Energy);
 
     //m_stepnumber /= m_numberofthreads;
@@ -158,6 +153,7 @@ void Sampler::printOutput()
 {
     cout << endl;
     cout << "  -- System info -- " << endl;
+    cout << " Number of threads  : " << m_numberofthreads << endl;
     cout << " Number of particles  : " << m_numberofparticles << endl;
     cout << " Number of dimensions : " << m_numberofdimensions << endl;
     cout << " Number of Metropolis steps run :" << m_numberofMetropolisSteps << " (2^" << std::log2(m_numberofMetropolisSteps) << ")" << endl;

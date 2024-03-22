@@ -111,50 +111,11 @@ int main(int argc, const char *argv[])
     std::unique_ptr<Sampler> sampler = std::make_unique<class Sampler>(samplers);
     sampler->printOutput();
 
-    /*auto rng = std::make_unique<Random>(seed);
-    // auto particles = SetupRandomUniformInitialState(
-    //     numberofdimensions,
-    //     numberofparticles,
-    //     *rng,
-    //     steplength
-    // );
-
-    auto particles = SetupRandomNormalInitialStates(
-        numberofdimensions,
-        numberofparticles,
-        *rng,
-        sqrt(steplength)
-    );
-
-    auto system = std::make_unique<System>(
-        std::make_unique<SimpleGaussian>(alpha, beta),
-        std::make_unique<MetropolisHastings>(std::move(rng)),
-        std::move(particles)
-    );
-    // auto acceptedEquilibrationSteps = system->RunEquilibrationSteps(
-    //     steplength,
-    //     numberofMetropolisSteps
-    // );
-    auto sampler = system->FindOptimalParameters(
-        steplength,
-        numberofMetropolisSteps,
-        eta,
-        tol,
-        maxiter
-    );
-
-    // auto sampler = system->RunMetropolisSteps(
-    //     steplength,
-    //     numberofMetropolisSteps
-    // );*/
-
     auto t2 = std::chrono::system_clock::now();
 
     std::chrono::duration<double> time = t2 - t1;
     cout << fixed << setprecision(3) << endl;
     cout << "Time : " << time.count() << " seconds" << endl;
-
-    // sampler->printOutput(*system);
 
     return 0;
 }

@@ -55,8 +55,6 @@ double InteractingGaussian::DoubleDerivative(
     double term2 = 0;
     double term3 = 0;
 
-    auto t1 = std::chrono::system_clock::now();
-
     double constant = 0;
     for (int i = 0; i < numberofdimensions; i++)
     {
@@ -104,18 +102,12 @@ double InteractingGaussian::DoubleDerivative(
 
             term3 += upp + 2/rkj*up;
         }
-        // term1 += 2*arma::dot(dphi,v);
-        // term2 += arma::dot(v,v);
-        for (int j = 0; j < 3; j++)
+        for (int j = 0; j < numberofdimensions; j++)
         {
             term1 += dphi(j)*v(j);
             term2 += v(j)*v(j);
         }
     }
-    auto t2 = std::chrono::system_clock::now();
-    std::chrono::duration<double> time = t2 - t1;
-    //cout << fixed << setprecision(3);
-    //cout << "time : " << time.count() << " seconds" << endl;
     return d2phi - constant + 2*term1 + term2 + term3;
 }
 
@@ -130,7 +122,7 @@ double InteractingGaussian::LocalEnergy(std::vector<std::unique_ptr<class Partic
         arma::vec pos = particles[i]->getPosition();
         potential += arma::sum(arma::square(pos%m_gamma_z));
     }
-    return 0.5*(-kinetic + potential);
+    return 0.5*(-kinetic + potential)/numberofdimensions;
 }
 
 arma::vec InteractingGaussian::QuantumForce(
@@ -200,7 +192,6 @@ double InteractingGaussian::w(std::vector<std::unique_ptr<class Particle>> &part
     double interaction = 1;
     for (int i = 0; i < numberofdimensions; i++)
     {
-        //dr2 += (pos(i) + step(i))*(pos(i) + step(i)) - pos(i)*pos(i)*m_beta_z(i);
         dr2 += (2*pos(i) + step(i))*step(i)*m_beta_z(i);
     }
     for (int i = 0; i < index; i++)
@@ -217,14 +208,17 @@ double InteractingGaussian::w(std::vector<std::unique_ptr<class Particle>> &part
         double rki_n = arma::norm(pos + step - posi);
         double rki_o = arma::norm(pos - posi);
 
-        if (rki_o<0)
-        {
-            interaction *= 1e6;
-        }
-        else
-        {
-            interaction *= std::max(1 - m_a/rki_n, 0.0)/std::max(1 - m_a/rki_o, 0.0);
-        }
+        //if (rki_o<0)
+        //{
+        //    interaction *= 1e6;
+        //}
+        //else
+        //{
+            double numerator = std::max(1 - m_a/rki_n, 0.0);
+            double denominator = std::max(1 - m_a/rki_o, 0.0);
+            interaction = numerator/denominator;
+            //interaction *= std::max(1 - m_a/rki_n, 0.0)/std::max(1 - m_a/rki_o, 0.0);
+        //}
     }
     return std::exp(-2*m_alpha*dr2)*interaction*interaction;
 }

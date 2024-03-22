@@ -14,11 +14,9 @@ std::vector<std::unique_ptr<Particle>> SetupRandomUniformInitialState(
     for (int i = 0; i < numberofparticles; i++)
     {
         arma::vec pos(numberofdimension);
-        //std::vector<double> pos = std::vector<double>();
         for (int j = 0; j < numberofdimension; j++)
         {
             pos(j) = stepsize * (rng.NextDouble() - 0.5);
-            //pos.push_back(stepsize * (rng.NextDouble() - 0.5));
         }
         particles.push_back(std::make_unique<Particle>(pos));
     }

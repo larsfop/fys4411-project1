@@ -63,7 +63,6 @@ double SimpleGaussian::DoubleDerivative(
 double SimpleGaussian::LocalEnergy(std::vector<std::unique_ptr<class Particle>> &particles)
 {
     int numberofparticles = particles.size();
-    int numberofdimensions = particles[0]->getNumberofDimensions();
     double kinetic = DoubleDerivative(particles);
 
     double potential = 0;
@@ -71,10 +70,6 @@ double SimpleGaussian::LocalEnergy(std::vector<std::unique_ptr<class Particle>> 
     {
         arma::vec pos = particles[i]->getPosition();
         potential += arma::sum(arma::square(pos));
-        // for (int j = 0; j < numberofdimensions; j++)
-        // {
-        //     potential += pos(j)*pos(j);
-        // }
     }
 
     // E_L = alpha(2 + beta) + r^2(1 - 4alpha)
@@ -86,7 +81,6 @@ arma::vec SimpleGaussian::QuantumForce(
     const int index
 )
 {
-    int numberofdimensions = particles[0]->getNumberofDimensions();
     arma::vec pos = particles[index]->getPosition();
     arma::vec qforce = pos%m_beta_z;
     return -4*m_alpha*qforce;
@@ -98,7 +92,6 @@ arma::vec SimpleGaussian::QuantumForce(
     const arma::vec Step
 )
 {
-    int numberofdimensions = particles[0]->getNumberofDimensions();
     arma::vec pos = particles[index]->getPosition();
     arma::vec qforce = pos%m_beta_z + Step;
     return -4*m_alpha*qforce; 
@@ -114,7 +107,6 @@ double SimpleGaussian::w(std::vector<std::unique_ptr<class Particle>> &particles
     double dr2 = 0;
     for (int i = 0; i < numberofdimensions; i++)
     {
-        //dr2 += (pos(i) + step(i))*(pos(i) + step(i)) - pos(i)*pos(i)*m_beta_z(i);
         dr2 += (2*pos(i) + step(i))*step(i)*m_beta_z(i);
     }
     return std::exp(-2*m_alpha*dr2);

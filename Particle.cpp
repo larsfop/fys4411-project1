@@ -8,7 +8,6 @@ using namespace std;
 Particle::Particle(const arma::vec &position)
 {
     m_NumberofDimensions = position.size();
-    //m_Position(m_NumberofDimensions);
     m_InitialPositions = position;
     m_Position = position;
     m_EquilibrationPositions = arma::vec(m_NumberofDimensions);

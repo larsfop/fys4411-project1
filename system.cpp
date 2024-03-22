@@ -48,7 +48,6 @@ std::unique_ptr<class Sampler> System::RunMetropolisSteps(
     }
         
     sampler->ComputeDerivatives();
-    //sampler->ComputeAverages();
     //sampler->WritetoFile(*this);
 
     return sampler;
