@@ -11,7 +11,8 @@ public:
     System(
         std::unique_ptr<class WaveFunction> wavefunction,
         std::unique_ptr<class MonteCarlo> solver,
-        std::vector<std::unique_ptr<class Particle>> particles
+        std::vector<std::unique_ptr<class Particle>> particles,
+        std::string Filename
     );
     std::unique_ptr<class Sampler> RunMetropolisSteps(
         double stepLength,
@@ -35,6 +36,7 @@ public:
 private:
     int m_numberofparticles;
     int m_numberofdimensions;
+    std::string m_Filename;
 
     std::unique_ptr<class WaveFunction> m_wavefunction;
     std::unique_ptr<class MonteCarlo> m_solver;

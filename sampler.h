@@ -13,7 +13,7 @@ public:
         double steplength,
         int numberofMetropolisSteps
     );
-    Sampler(std::vector<std::unique_ptr<class Sampler>> &samplers);
+    Sampler(std::vector<std::unique_ptr<class Sampler>> &samplers, std::string Filename);
     void Sample(bool acceptedstep, class System *system);
     void printOutput(class System &system);
     void printOutput();
@@ -22,9 +22,10 @@ public:
     double getEnergy() {return m_Energy; };
     arma::vec getEnergyDerivatives() {return m_EnergyDerivative; };
     void CreateFile();
-    void WritetoFile(System &system);
+    void WritetoFile();
     void WriteEnergiestoFile(System &system, int iteration);
     void setParameters(double alpha, double beta);
+    void setFilename(std::string Filename) {m_Filename = Filename; };
 
 private:
     int m_stepnumber;

@@ -1,0 +1,12 @@
+seed=1234
+MetropolisSteps=20
+Particles=1
+Dimensions=3
+alpha=0.5
+beta=1.0
+Steplength=0.01
+threadsused=1
+Filename=Output
+OptimizeForParameters=0
+Interacting=0
+Hastings=1

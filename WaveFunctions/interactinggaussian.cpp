@@ -49,6 +49,7 @@ double InteractingGaussian::DoubleDerivative(
 {
     int numberofdimensions = particles[0]->getNumberofDimensions();
     int numberofparticles = particles.size();
+    arma::vec beta_z2 = arma::square(m_beta_z);
     double d2phi = 0;
     double alpha2 = m_alpha*m_alpha;
     double term1 = 0;
@@ -62,10 +63,9 @@ double InteractingGaussian::DoubleDerivative(
     }
     constant *= 2*m_alpha*numberofparticles;
 
-    for (int i  = 0; i < numberofparticles; i++)
+    for (int i = 0; i < numberofparticles; i++)
     {
         arma::vec pos = particles[i]->getPosition();
-        arma::vec r2 = arma::square(pos%m_beta_z);
 
         // Calculate the double and single derivative of phi, divided by phi
         arma::vec posj(numberofdimensions);
@@ -73,7 +73,7 @@ double InteractingGaussian::DoubleDerivative(
         arma::vec v(numberofdimensions);
         for (int j = 0; j < numberofdimensions; j++)
         {
-            d2phi += 4*alpha2*r2(j);
+            d2phi += 4*alpha2*pos(j)*pos(j)*beta_z2(j);
             dphi(j) = -2*m_alpha*pos(j);
         }
 
@@ -115,12 +115,16 @@ double InteractingGaussian::LocalEnergy(std::vector<std::unique_ptr<class Partic
 {
     int numberofparticles = particles.size();
     int numberofdimensions = particles[0]->getNumberofDimensions();
+    arma::vec gamma_z2 = arma::square(m_gamma_z);
     double kinetic = DoubleDerivative(particles);
     double potential = 0;
     for (int i = 0; i < numberofparticles; i++)
     {
         arma::vec pos = particles[i]->getPosition();
-        potential += arma::sum(arma::square(pos%m_gamma_z));
+        for (int j = 0; j < numberofdimensions; j++)
+        {
+            potential += pos(j)*pos(j)*gamma_z2(j);
+        }
     }
     return 0.5*(-kinetic + potential)/numberofdimensions;
 }
@@ -133,21 +137,27 @@ arma::vec InteractingGaussian::QuantumForce(
     int numberofdimensions = particles[0]->getNumberofDimensions();
     int numberofparticles = particles.size();
     arma::vec pos = particles[index]->getPosition();
-    arma::vec qforce = pos % m_beta_z;
+    arma::vec qforce(numberofdimensions);
+    for (int i = 0; i < numberofdimensions; i++)
+    {
+        qforce(i) = pos(i)*m_beta_z(i);
+    }
     arma::vec up(numberofdimensions);
     for (int j = 0; j < index; j++)
     {
         arma::vec posj = particles[j]->getPosition();
         double rkj = arma::norm(pos - posj);
 
-        up -= (pos - posj)/(rkj*(rkj - m_a)*(rkj - m_a));
+        //up -= (pos - posj)/(rkj*(rkj - m_a)*(rkj - m_a));
+        up -= (pos - posj)/(rkj*rkj*(rkj - m_a));
     }
     for (int j = index+1; j < numberofparticles; j++)
     {
         arma::vec posj = particles[j]->getPosition();
         double rkj = arma::norm(pos - posj);
 
-        up -= (pos - posj)/(rkj*(rkj - m_a)*(rkj - m_a));
+        //up -= (pos - posj)/(rkj*(rkj - m_a)*(rkj - m_a));
+        up -= (pos - posj)/(rkj*rkj*(rkj - m_a));
     }
     return -4*m_alpha*qforce + 2*m_a*up;
 }
@@ -161,7 +171,11 @@ arma::vec InteractingGaussian::QuantumForce(
     int numberofdimensions = particles[0]->getNumberofDimensions();
     int numberofparticles = particles.size();
     arma::vec pos = particles[index]->getPosition();
-    arma::vec qforce = pos%m_beta_z + Step;
+    arma::vec qforce(numberofdimensions);
+    for (int i = 0; i < numberofdimensions; i++)
+    {
+        qforce(i) = pos(i)*m_beta_z(i) + Step(i);
+    }
     arma::vec up(numberofdimensions);
     for (int j = 0; j < index; j++)
     {

@@ -14,7 +14,8 @@ using std::endl;
 System::System(
     std::unique_ptr<class WaveFunction> wavefunction,
     std::unique_ptr<class MonteCarlo> solver,
-    std::vector<std::unique_ptr<class Particle>> particles
+    std::vector<std::unique_ptr<class Particle>> particles,
+    std::string Filename
 )
 {
     m_numberofparticles = particles.size();
@@ -22,6 +23,8 @@ System::System(
     m_wavefunction = std::move(wavefunction);
     m_solver = std::move(solver);
     m_particles = std::move(particles);
+
+    m_Filename = Filename;
 }
 
 std::unique_ptr<class Sampler> System::RunMetropolisSteps(
@@ -48,6 +51,7 @@ std::unique_ptr<class Sampler> System::RunMetropolisSteps(
     }
         
     sampler->ComputeDerivatives();
+    sampler->ComputeAverages();
     //sampler->WritetoFile(*this);
 
     return sampler;
@@ -117,18 +121,22 @@ std::unique_ptr<class Sampler> System::FindOptimalParameters(
     int iterations = 0;
     while (gradient > tolerance && iterations < maxiterations)
     {
-        cout << "Iteration : " << iterations+1 << endl;
+        //cout << "Iteration : " << iterations+1 << endl;
         sampler = this->RunMetropolisSteps(steplength, numberofMetropolisSteps);
+        sampler->setFilename(m_Filename);
         arma::vec energyderivatives = sampler->getEnergyDerivatives();
 
         gradient = 0;
         for (int i = 0; i < nparams-1; i++)
         {
             params(i) -= learningrate*energyderivatives(i)/m_numberofparticles;
-            cout << "Parameter " << i+1 << " : " << params(i) << endl;
-            cout << "EnergyDerivative " << i+1 << " : " << energyderivatives(i) << endl;
+            //cout << "Parameter " << i+1 << " : " << params(i) << endl;
+            //cout << "EnergyDerivative " << i+1 << " : " << energyderivatives(i) << endl;
             gradient += std::abs(energyderivatives(i));
         }
+
+        //sampler->ComputeAverages();
+        sampler->WritetoFile();
         
         m_wavefunction->ChangeParameters(params(0), params(1));
         sampler->setParameters(params(0), params(1));
@@ -139,6 +147,6 @@ std::unique_ptr<class Sampler> System::FindOptimalParameters(
 
         iterations++;
     }
-    cout << "Max iterations : " << iterations << endl;
+    //cout << "Max iterations : " << iterations << endl;
     return sampler;
 }

@@ -33,11 +33,9 @@ Sampler::Sampler(
     m_DeltaPsi = arma::vec(2);
     m_PsiEnergyDerivative = arma::vec(2);
     m_params = arma::vec(2);
-
-    m_Filename = "Results.dat";
 }
 
-Sampler::Sampler(std::vector<std::unique_ptr<class Sampler>> &samplers)
+Sampler::Sampler(std::vector<std::unique_ptr<class Sampler>> &samplers, std::string Filename)
 {
     m_numberofthreads = samplers.size();
 
@@ -60,9 +58,11 @@ Sampler::Sampler(std::vector<std::unique_ptr<class Sampler>> &samplers)
     {
         m_Energy += sampler->m_Energy;
         m_Energy2 += sampler->m_Energy2;
+        //m_variance += sampler->m_variance;
         
         m_DeltaPsi += sampler->m_DeltaPsi;
         m_PsiEnergyDerivative += sampler->m_PsiEnergyDerivative;
+        //m_EnergyDerivative += sampler->m_EnergyDerivative;
 
         m_stepnumber += sampler->m_stepnumber;
         m_numberofacceptedsteps += sampler->m_numberofacceptedsteps; 
@@ -73,10 +73,10 @@ Sampler::Sampler(std::vector<std::unique_ptr<class Sampler>> &samplers)
         }
     }
 
-    m_Energy /= m_numberofMetropolisSteps*m_numberofthreads*m_numberofparticles;
-    m_Energy2 /= m_numberofMetropolisSteps*m_numberofthreads*m_numberofparticles*m_numberofparticles;
-    m_DeltaPsi /= m_numberofMetropolisSteps*m_numberofthreads;
-    m_PsiEnergyDerivative /= m_numberofMetropolisSteps*m_numberofthreads;
+    m_Energy /= m_numberofthreads*m_numberofparticles;
+    m_Energy2 /= m_numberofthreads*m_numberofparticles*m_numberofparticles;
+    m_DeltaPsi /= m_numberofthreads;
+    m_PsiEnergyDerivative /= m_numberofthreads;
 
     m_variance = m_Energy2 - m_Energy*m_Energy;
     m_EnergyDerivative = 2*(m_PsiEnergyDerivative - m_DeltaPsi*m_Energy);
@@ -85,6 +85,8 @@ Sampler::Sampler(std::vector<std::unique_ptr<class Sampler>> &samplers)
     m_numberofacceptedsteps /= m_numberofthreads;
 
     m_params /= m_numberofthreads;
+
+    m_Filename = Filename;
 }
 
 void Sampler::Sample(bool acceptedstep, class System *system)
@@ -115,10 +117,7 @@ void Sampler::ComputeAverages()
 {
     m_Energy /= m_numberofMetropolisSteps;
     m_Energy2 /= m_numberofMetropolisSteps;
-    m_DeltaPsi /= m_numberofMetropolisSteps;
-    m_PsiEnergyDerivative /= m_numberofMetropolisSteps;
     m_variance = m_Energy2 - m_Energy*m_Energy;
-    m_EnergyDerivative = 2*(m_PsiEnergyDerivative - m_DeltaPsi*m_Energy);
 
     //m_stepnumber /= m_numberofthreads;
     //m_numberofacceptedsteps /= m_numberofthreads;
@@ -183,19 +182,24 @@ void Sampler::CreateFile()
     ofile.close();
 }
 
-void Sampler::WritetoFile(System &system)
+void Sampler::WritetoFile()
 {
-    auto params = system.getParameters();
     int width = 20;
 
     std::ofstream ofile(m_Filename, std::ofstream::app);
 
     // ofile << setprecision(6);
-    ofile << setw(width-8) << params(0)
+    ofile << setw(width-8) << m_numberofMetropolisSteps
+            << setw(width) << m_numberofacceptedsteps
+            << setw(width) << m_numberofdimensions
+            << setw(width) << m_numberofparticles
+            << setw(width) << m_steplength
+            << setw(width) << m_params(0)
             << setw(width) << m_EnergyDerivative(0)
-            << setw(width) << params(1)
+            << setw(width) << m_params(1)
             << setw(width) << m_EnergyDerivative(1)
             << setw(width) << m_Energy
+            << setw(width) << m_variance
             << endl;
     ofile.close();
 }

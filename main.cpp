@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <stdio.h>
 #include <chrono>
+#include <map>
 
 #include "Particle.h"
 #include "Math/random.h"
@@ -24,37 +25,114 @@ using namespace std;
 
 int main(int argc, const char *argv[])
 {
-    int seed = 1234;
+    int seed, numberofMetropolisSteps, numberofparticles, numberofdimensions;
+    double alpha, beta, steplength;
+    string Filename;
+    bool OptimizeForParameters, Interacting, Hastings;
+
+    string input;
+    ifstream ifile("config");
+    while (getline(ifile, input))
+    {
+        string name = input.substr(0, input.find("="));
+        string value = input.substr(input.find("=")+1);
+        if (name == "seed")
+        {seed = stoi(value); }
+        else if (name == "MetropolisSteps")
+        {numberofMetropolisSteps = 1 << stoi(value); }
+        else if (name == "Particles")
+        {numberofparticles = stoi(value); }
+        else if (name == "Dimensions")
+        {numberofdimensions = stoi(value); }
+        else if (name == "alpha")
+        {alpha = stod(value); }
+        else if (name == "beta")
+        {beta = stod(value); }
+        else if (name == "Steplength")
+        {steplength = stod(value); }
+        else if (name == "threadsused")
+        {omp_set_num_threads(stoi(value)); }
+        else if (name == "Filename")
+        {Filename = value; }
+        else if (name == "OptimizeForParameters")
+        {OptimizeForParameters = (bool) stoi(value); }
+        else if (name == "Interacting")
+        {Interacting = (bool) stoi(value); }
+        else if (name == "Hastings")
+        {Hastings = (bool) stoi(value); }
+    }
+
+    if (argc > 1)
+    {
+        for (int i = 1; i < argc; i++)
+        {
+            string input = argv[i];
+            string name = input.substr(0, input.find("="));
+            string value = input.substr(input.find("=")+1);
+            if (name == "seed")
+            {seed = stoi(value); }
+            else if (name == "MetropolisSteps")
+            {numberofMetropolisSteps = 1 << stoi(value); }
+            else if (name == "Particles")
+            {numberofparticles = stoi(value); }
+            else if (name == "Dimensions")
+            {numberofdimensions = stoi(value); }
+            else if (name == "alpha")
+            {alpha = stod(value); }
+            else if (name == "beta")
+            {beta = stod(value); }
+            else if (name == "Steplength")
+            {steplength = stod(value); }
+            else if (name == "threadsused")
+            {omp_set_num_threads(stoi(value)); }
+            else if (name == "Filename")
+            {Filename = value; }
+            else if (name == "OptimizeForParameters")
+            {OptimizeForParameters = (bool) stoi(value); }   
+            else if (name == "Interacting")
+            {Interacting = (bool) stoi(value); }
+            else if (name == "Hastings")
+            {Hastings = (bool) stoi(value); }
+        }
+    }
+
+    // int seed = 1234;
 
     // Number of MonteCarlo steps given in binary powers
     // i.e. = 2^{terminal input}
-    int numberofMetropolisSteps = 1 << atoi(argv[1]);
+    // int numberofMetropolisSteps = 1 << atoi(argv[1]);
     // int numberofMetropolisSteps = stod(argv[1]);
-    int numberofparticles = atoi(argv[2]);
-    int numberofdimensions = atoi(argv[3]);
+    // int numberofparticles = atoi(argv[2]);
+    // int numberofdimensions = atoi(argv[3]);
     int numberofEquilibrationSteps = 1e5;
 
-    double alpha = atof(argv[4]);
-    double beta = atof(argv[5]);
-    double steplength = 0.01;
+    // double alpha = atof(argv[4]);
+    // double beta = atof(argv[5]);
+    // double steplength = 0.01;
 
     double eta = 0.1;
     double tol = 1e-7;
     int maxiter = 1e3;
 
-    bool OptimizeForParameters = false;
+    // bool OptimizeForParameters = false;
 
-    omp_set_num_threads(atoi(argv[6]));
+    // omp_set_num_threads(atoi(argv[6]));
 
     string Path = "Outputs/";
     int width = 20;
-    string Filename = Path + argv[7] + ".dat";
+    Filename = Path + Filename + ".dat";
     ofstream outfile(Filename);
-    outfile << setw(width-8) << "alpha"
+    outfile << setw(width-8) << "MC-cycles"
+            << setw(width) << "Accepted Steps"
+            << setw(width) << "Dimensions"
+            << setw(width) << "Particles"
+            << setw(width) << "Steplength"
+            << setw(width) << "alpha"
             << setw(width) << "dalpha"
             << setw(width) << "beta"
             << setw(width) << "dbeta"
             << setw(width) << "Energy"
+            << setw(width) << "Variance"
             << endl;
     outfile.close();
 
@@ -76,10 +154,33 @@ int main(int argc, const char *argv[])
             std::sqrt(steplength)
         );
 
+        std::unique_ptr<class WaveFunction> wavefunction;
+        std::unique_ptr<class MonteCarlo> solver;
+
+        if (Interacting)
+        {
+            wavefunction = std::make_unique<class InteractingGaussian>(alpha, beta);
+        }
+        else
+        {
+            wavefunction = std::make_unique<class SimpleGaussian>(alpha, beta);
+        }
+
+        if (Hastings)
+        {
+            solver = std::make_unique<class MetropolisHastings>(std::move(rng));
+        }
+        else
+        {
+            solver = std::make_unique<class Metropolis>(std::move(rng));
+        }
+
         auto system = std::make_unique<System>(
-            std::make_unique<InteractingGaussian>(alpha, beta),
-            std::make_unique<MetropolisHastings>(std::move(rng)),
-            std::move(particles)
+            // std::make_unique<InteractingGaussian>(alpha, beta),
+            std::move(wavefunction),
+            std::move(solver),
+            std::move(particles),
+            Filename
         );
 
         auto acceptedEquilibrationSteps = system->RunEquilibrationSteps(
@@ -108,9 +209,12 @@ int main(int argc, const char *argv[])
 
         samplers.push_back(std::move(sampler));
     }
-    std::unique_ptr<Sampler> sampler = std::make_unique<class Sampler>(samplers);
-    sampler->printOutput();
+    std::unique_ptr<Sampler> sampler = std::make_unique<class Sampler>(samplers, Filename);
 
+    sampler->WritetoFile();
+
+    sampler->printOutput();
+    
     auto t2 = std::chrono::system_clock::now();
 
     std::chrono::duration<double> time = t2 - t1;
