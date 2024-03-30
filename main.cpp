@@ -25,10 +25,11 @@ using namespace std;
 
 int main(int argc, const char *argv[])
 {
-    int seed, numberofMetropolisSteps, numberofparticles, numberofdimensions;
+    int seed, numberofMetropolisSteps, numberofparticles, numberofdimensions, maxvariations;
     double alpha, beta, steplength;
+    double dx = 1e-1;
     string Filename;
-    bool OptimizeForParameters, Interacting, Hastings;
+    bool OptimizeForParameters, Interacting, Hastings, NumericalDer;
 
     string input;
     ifstream ifile("config");
@@ -40,6 +41,8 @@ int main(int argc, const char *argv[])
         {seed = stoi(value); }
         else if (name == "MetropolisSteps")
         {numberofMetropolisSteps = 1 << stoi(value); }
+        else if (name == "MaxVariations")
+        {maxvariations = stoi(value); }
         else if (name == "Particles")
         {numberofparticles = stoi(value); }
         else if (name == "Dimensions")
@@ -60,6 +63,8 @@ int main(int argc, const char *argv[])
         {Interacting = (bool) stoi(value); }
         else if (name == "Hastings")
         {Hastings = (bool) stoi(value); }
+        else if (name == "NumericalDer")
+        {NumericalDer = (bool) stoi(value); }
     }
 
     if (argc > 1)
@@ -73,6 +78,8 @@ int main(int argc, const char *argv[])
             {seed = stoi(value); }
             else if (name == "MetropolisSteps")
             {numberofMetropolisSteps = 1 << stoi(value); }
+            else if (name == "MaxVariations")
+            {maxvariations = stoi(value); }
             else if (name == "Particles")
             {numberofparticles = stoi(value); }
             else if (name == "Dimensions")
@@ -93,6 +100,8 @@ int main(int argc, const char *argv[])
             {Interacting = (bool) stoi(value); }
             else if (name == "Hastings")
             {Hastings = (bool) stoi(value); }
+            else if (name == "NumericalDer")
+            {NumericalDer = (bool) stoi(value); }
         }
     }
 
@@ -119,10 +128,10 @@ int main(int argc, const char *argv[])
     // omp_set_num_threads(atoi(argv[6]));
 
     string Path = "Outputs/";
-    int width = 20;
+    int width = 16;
     Filename = Path + Filename + ".dat";
     ofstream outfile(Filename);
-    outfile << setw(width-8) << "MC-cycles"
+    outfile << setw(width-6) << "MC-cycles"
             << setw(width) << "Accepted Steps"
             << setw(width) << "Dimensions"
             << setw(width) << "Particles"
@@ -147,12 +156,25 @@ int main(int argc, const char *argv[])
         int threadnumber = omp_get_thread_num();
         auto rng = std::make_unique<Random>(seed+threadnumber);
 
-        auto particles = SetupRandomNormalInitialStates(
-            numberofdimensions,
-            numberofparticles,
-            *rng,
-            std::sqrt(steplength)
-        );
+        std::vector<std::unique_ptr<class Particle>> particles;
+        if (Hastings)
+        {
+            particles = SetupRandomNormalInitialStates(
+                numberofdimensions,
+                numberofparticles,
+                *rng,
+                std::sqrt(steplength)
+            );
+        }
+        else
+        {
+            particles = SetupRandomUniformInitialState(
+                numberofdimensions,
+                numberofparticles,
+                *rng,
+                steplength
+            );
+        }
 
         std::unique_ptr<class WaveFunction> wavefunction;
         std::unique_ptr<class MonteCarlo> solver;
@@ -176,7 +198,6 @@ int main(int argc, const char *argv[])
         }
 
         auto system = std::make_unique<System>(
-            // std::make_unique<InteractingGaussian>(alpha, beta),
             std::move(wavefunction),
             std::move(solver),
             std::move(particles),
@@ -201,9 +222,10 @@ int main(int argc, const char *argv[])
         }
         else
         {
-            sampler = system->RunMetropolisSteps(
+            sampler = system->VaryParameters(
                 steplength,
-                numberofMetropolisSteps
+                numberofMetropolisSteps,
+                maxvariations
             ); 
         }
 
@@ -211,7 +233,7 @@ int main(int argc, const char *argv[])
     }
     std::unique_ptr<Sampler> sampler = std::make_unique<class Sampler>(samplers, Filename);
 
-    sampler->WritetoFile();
+    //sampler->WritetoFile();
 
     sampler->printOutput();
     
@@ -220,6 +242,44 @@ int main(int argc, const char *argv[])
     std::chrono::duration<double> time = t2 - t1;
     cout << fixed << setprecision(3) << endl;
     cout << "Time : " << time.count() << " seconds" << endl;
+
+    if (NumericalDer)
+    {
+        auto t1 = std::chrono::system_clock::now();
+
+        auto rng = std::make_unique<Random>(seed);
+
+        auto particles = SetupRandomUniformInitialState(
+            numberofdimensions,
+            numberofparticles,
+            *rng,
+            steplength
+        );
+
+        auto system = std::make_unique<System>(
+            std::make_unique<class SimpleGaussianNumerical>(alpha, beta, dx),
+            std::make_unique<class Metropolis>(std::move(rng)),
+            std::move(particles),
+            Filename
+        );
+
+        auto acceptedEquilibrationSteps = system->RunEquilibrationSteps(
+            steplength,
+            numberofEquilibrationSteps
+        );
+
+        auto sampler = system->VaryParameters(
+            steplength,
+            numberofMetropolisSteps,
+            maxvariations
+        );
+
+        sampler->printOutput();
+
+        auto t2 = std::chrono::system_clock::now();
+        std::chrono::duration<double> time = t2 - t1;
+        cout << "Numerical time : " << time.count() << " seconds" << endl;
+    }
 
     return 0;
 }

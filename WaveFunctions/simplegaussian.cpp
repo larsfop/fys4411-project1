@@ -1,5 +1,4 @@
 
-#include <memory>
 #include "simplegaussian.h"
 
 #include <iostream>
@@ -158,4 +157,61 @@ void SimpleGaussian::ChangeParameters(const double alpha, const double beta)
     m_alpha = alpha,
     m_beta = beta;
     m_parameters = {alpha, beta};
+}
+
+
+SimpleGaussianNumerical::SimpleGaussianNumerical(double alpha, double beta, double dx) : SimpleGaussian(alpha, beta)
+{
+    m_alpha = alpha;
+    m_dx = dx;
+    m_beta_z = {1.0, 1.0, beta};
+}
+
+double SimpleGaussianNumerical::EvaluateSingleParticle(class Particle particle)
+{
+    int numnerofdimensions = particle.getNumberofDimensions();
+    arma::vec pos = particle.getPosition();
+    double r2 = 0;
+    for (int i = 0; i < numnerofdimensions; i++)
+    {
+        r2 += pos(i)*pos(i)*m_beta_z(i);
+    }
+    return std::exp(-m_alpha*r2);
+}
+
+double SimpleGaussianNumerical::EvaluateSingleParticle(class Particle particle, double step, double step_index)
+{
+    int numnerofdimensions = particle.getNumberofDimensions();
+    arma::vec pos = particle.getPosition();
+    pos(step_index) += step;
+    double r2 = 0;
+    for (int i = 0; i < numnerofdimensions; i++)
+    {
+        r2 += pos(i)*pos(i)*m_beta_z(i);
+    }
+    return std::exp(-m_alpha*r2);
+}
+
+double SimpleGaussianNumerical::DoubleDerivative(std::vector<std::unique_ptr<class Particle>> &particles)
+{
+    int numberofparticles = particles.size();
+    int numberofdimensions = particles[0]->getNumberofDimensions();
+    double dersum = 0;
+    double g, gdx_p, gdx_m;
+    arma::vec pos, der;
+
+    for (int i = 0; i < numberofparticles; i++)
+    {
+        Particle &particle = *particles[i];
+        g = EvaluateSingleParticle(particle);
+        for (int j = 0; j < numberofdimensions; j++)
+        {
+            gdx_p = EvaluateSingleParticle(particle, m_dx, j);
+            gdx_m = EvaluateSingleParticle(particle, -2*m_dx, j);
+            dersum += (gdx_p - 2*g + gdx_m)/(m_dx*m_dx);
+        }
+        dersum /= g;
+    }
+
+    return dersum;
 }

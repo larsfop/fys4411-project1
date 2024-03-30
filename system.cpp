@@ -101,11 +101,6 @@ std::unique_ptr<class Sampler> System::FindOptimalParameters(
     int maxiterations
 )
 {
-    // declare initial params like alpha, beta and eta
-    // run MonteCarlo
-    // compute the gradient
-    // adjust the wf params and restart
-    // repeat until a set tolerance or max iterations
     int nparams = m_wavefunction->getParameters().n_elem;
 
     arma::vec params = m_wavefunction->getParameters();
@@ -123,7 +118,6 @@ std::unique_ptr<class Sampler> System::FindOptimalParameters(
     {
         //cout << "Iteration : " << iterations+1 << endl;
         sampler = this->RunMetropolisSteps(steplength, numberofMetropolisSteps);
-        sampler->setFilename(m_Filename);
         arma::vec energyderivatives = sampler->getEnergyDerivatives();
 
         gradient = 0;
@@ -135,6 +129,7 @@ std::unique_ptr<class Sampler> System::FindOptimalParameters(
             gradient += std::abs(energyderivatives(i));
         }
 
+        sampler->setFilename(m_Filename);
         //sampler->ComputeAverages();
         sampler->WritetoFile();
         
@@ -148,5 +143,44 @@ std::unique_ptr<class Sampler> System::FindOptimalParameters(
         iterations++;
     }
     //cout << "Max iterations : " << iterations << endl;
+    return sampler;
+}
+
+std::unique_ptr<class Sampler> System::VaryParameters(
+    double steplength,
+    int numberofMetropolisSteps,
+    int maxvariations
+)
+{
+    int nparams = m_wavefunction->getParameters().n_elem;
+
+    arma::vec params = m_wavefunction->getParameters();
+    double alpha = params(0);
+    double beta = params(1);
+
+    auto sampler = std::make_unique<Sampler>(
+        m_numberofparticles,
+        m_numberofdimensions,
+        steplength,
+        numberofMetropolisSteps
+    );
+
+    double DeltaParams = 0.02;
+    for (int i = 0; i < maxvariations; i++)
+    {
+        sampler = this->RunMetropolisSteps(steplength, numberofMetropolisSteps);
+        sampler->setFilename(m_Filename);
+        sampler->WritetoFile();
+
+        alpha += DeltaParams;
+        m_wavefunction->ChangeParameters(alpha, beta);
+        sampler->setParameters(alpha, beta);
+
+        for (int j = 0; j < m_numberofparticles; j++)
+        {
+            m_particles[j]->SetPositionsToEquilibration();
+        }
+    }
+
     return sampler;
 }

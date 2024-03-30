@@ -184,12 +184,12 @@ void Sampler::CreateFile()
 
 void Sampler::WritetoFile()
 {
-    int width = 20;
+    int width = 16;
 
     std::ofstream ofile(m_Filename, std::ofstream::app);
 
     // ofile << setprecision(6);
-    ofile << setw(width-8) << m_numberofMetropolisSteps
+    ofile << setw(width-6) << m_numberofMetropolisSteps
             << setw(width) << m_numberofacceptedsteps
             << setw(width) << m_numberofdimensions
             << setw(width) << m_numberofparticles

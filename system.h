@@ -29,6 +29,11 @@ public:
         double tolerance,
         int maxiterations
     );
+    std::unique_ptr<class Sampler> VaryParameters(
+        double steplength,
+        int numberofMetropolisSteps,
+        int maxvariations
+    );
     double ComputeLocalEnergy();
     arma::vec ComputeDerivatives();
     arma::vec getParameters();

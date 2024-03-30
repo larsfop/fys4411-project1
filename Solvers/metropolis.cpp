@@ -20,7 +20,7 @@ bool Metropolis::Step(
     arma::vec step(numberofdimension, arma::fill::zeros);
     for (int i = 0; i < numberofdimension; i++)
     {
-        step(i) = stepsize * m_rng->NextGaussian();
+        step(i) = stepsize * (m_rng->NextDouble() - 0.5);
     }
     double w = wavefunction.w(particles, index, step);
 
