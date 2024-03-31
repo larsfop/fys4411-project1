@@ -20,9 +20,6 @@
 
 using namespace std;
 
-// Profiling shows more than half the time running is spent computing 
-// the double derivative for the interacting case, especially for many particles
-
 int main(int argc, const char *argv[])
 {
     int seed, numberofMetropolisSteps, numberofparticles, numberofdimensions, maxvariations;
