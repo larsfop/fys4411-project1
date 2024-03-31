@@ -32,7 +32,6 @@
 *.app
 
 # Text files
-*.dat
 *.txt
 
 # Ignore directories

@@ -26,6 +26,7 @@ public:
     void WriteEnergiestoFile(System &system, int iteration);
     void setParameters(double alpha, double beta);
     void setFilename(std::string Filename) {m_Filename = Filename; };
+    void SetTime(std::chrono::duration<double> time) {m_time = time; };
 
 private:
     int m_stepnumber;
@@ -44,4 +45,5 @@ private:
     arma::vec m_EnergyDerivative;
     arma::vec m_params;
     std::string m_Filename;
+    std::chrono::duration<double> m_time;
 };

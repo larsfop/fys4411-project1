@@ -120,7 +120,7 @@ int main(int argc, const char *argv[])
     // double steplength = 0.01;
 
     double eta = 0.1;
-    double tol = 1e-7;
+    double tol = 1e-5;
     int maxiter = 1e3;
 
     // bool OptimizeForParameters = false;
@@ -132,7 +132,7 @@ int main(int argc, const char *argv[])
     Filename = Path + Filename + ".dat";
     ofstream outfile(Filename);
     outfile << setw(width-6) << "MC-cycles"
-            << setw(width) << "Accepted Steps"
+            << setw(width) << "Accepted_Steps"
             << setw(width) << "Dimensions"
             << setw(width) << "Particles"
             << setw(width) << "Steplength"
@@ -142,6 +142,7 @@ int main(int argc, const char *argv[])
             << setw(width) << "dbeta"
             << setw(width) << "Energy"
             << setw(width) << "Variance"
+            << setw(width) << "Time"
             << endl;
     outfile.close();
 

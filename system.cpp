@@ -39,6 +39,7 @@ std::unique_ptr<class Sampler> System::RunMetropolisSteps(
         numberofMetropolisSteps
     );
     //int j = 0;
+    auto t1 = std::chrono::system_clock::now();
     for (int i = 0; i < numberofMetropolisSteps; i++)
     {
         bool acceptedStep;
@@ -46,6 +47,7 @@ std::unique_ptr<class Sampler> System::RunMetropolisSteps(
         {
             acceptedStep = m_solver->Step(steplength, *m_wavefunction, m_particles, j);
         }
+
         sampler->Sample(acceptedStep, this);
         //sampler->WriteEnergiestoFile(*this, i+1);
     }
@@ -53,6 +55,10 @@ std::unique_ptr<class Sampler> System::RunMetropolisSteps(
     sampler->ComputeDerivatives();
     sampler->ComputeAverages();
     //sampler->WritetoFile(*this);
+
+    auto t2 = std::chrono::system_clock::now();
+    std::chrono::duration<double> time = t2 - t1;
+    sampler->SetTime(time);
 
     return sampler;
 }

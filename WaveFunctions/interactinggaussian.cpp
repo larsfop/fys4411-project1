@@ -126,7 +126,7 @@ double InteractingGaussian::LocalEnergy(std::vector<std::unique_ptr<class Partic
             potential += pos(j)*pos(j)*gamma_z2(j);
         }
     }
-    return 0.5*(-kinetic + potential)/numberofdimensions;
+    return 0.5*(-kinetic + potential);
 }
 
 arma::vec InteractingGaussian::QuantumForce(

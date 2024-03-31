@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 #include <armadillo>
+#include <chrono>
 #include <omp.h>
 
 class System
@@ -41,6 +42,7 @@ public:
 private:
     int m_numberofparticles;
     int m_numberofdimensions;
+    std::chrono::duration<double> m_time;
     std::string m_Filename;
 
     std::unique_ptr<class WaveFunction> m_wavefunction;

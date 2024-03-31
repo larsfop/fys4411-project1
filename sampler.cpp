@@ -200,6 +200,7 @@ void Sampler::WritetoFile()
             << setw(width) << m_EnergyDerivative(1)
             << setw(width) << m_Energy
             << setw(width) << m_variance
+            << setw(width) << m_time.count()
             << endl;
     ofile.close();
 }
