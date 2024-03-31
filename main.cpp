@@ -102,27 +102,11 @@ int main(int argc, const char *argv[])
         }
     }
 
-    // int seed = 1234;
-
-    // Number of MonteCarlo steps given in binary powers
-    // i.e. = 2^{terminal input}
-    // int numberofMetropolisSteps = 1 << atoi(argv[1]);
-    // int numberofMetropolisSteps = stod(argv[1]);
-    // int numberofparticles = atoi(argv[2]);
-    // int numberofdimensions = atoi(argv[3]);
     int numberofEquilibrationSteps = 1e5;
-
-    // double alpha = atof(argv[4]);
-    // double beta = atof(argv[5]);
-    // double steplength = 0.01;
 
     double eta = 0.1;
     double tol = 1e-5;
     int maxiter = 1e3;
-
-    // bool OptimizeForParameters = false;
-
-    // omp_set_num_threads(atoi(argv[6]));
 
     string Path = "Outputs/";
     int width = 16;
