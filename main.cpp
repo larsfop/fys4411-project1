@@ -26,7 +26,7 @@ int main(int argc, const char *argv[])
     double alpha, beta, steplength;
     double dx = 1e-1;
     string Filename;
-    bool OptimizeForParameters, Interacting, Hastings, NumericalDer;
+    bool OptimizeForParameters, Interacting, Hastings, NumericalDer, Printout;
 
     string input;
     ifstream ifile("config");
@@ -62,6 +62,8 @@ int main(int argc, const char *argv[])
         {Hastings = (bool) stoi(value); }
         else if (name == "NumericalDer")
         {NumericalDer = (bool) stoi(value); }
+        else if (name=="Printout")
+        {Printout = (bool) stoi(value); }
     }
 
     if (argc > 1)
@@ -99,6 +101,8 @@ int main(int argc, const char *argv[])
             {Hastings = (bool) stoi(value); }
             else if (name == "NumericalDer")
             {NumericalDer = (bool) stoi(value); }
+            else if (name=="Printout")
+            {Printout = (bool) stoi(value); }
         }
     }
 
@@ -106,7 +110,7 @@ int main(int argc, const char *argv[])
 
     double eta = 0.1;
     double tol = 1e-5;
-    int maxiter = 1e3;
+    int maxiter = 1e2;
 
     string Path = "Outputs/";
     int width = 16;
@@ -124,6 +128,7 @@ int main(int argc, const char *argv[])
             << setw(width) << "Energy"
             << setw(width) << "Variance"
             << setw(width) << "Time"
+            << setw(width) << "Thread"
             << endl;
     outfile.close();
 
@@ -183,7 +188,8 @@ int main(int argc, const char *argv[])
             std::move(wavefunction),
             std::move(solver),
             std::move(particles),
-            Filename
+            Filename,
+            Printout
         );
 
         auto acceptedEquilibrationSteps = system->RunEquilibrationSteps(
@@ -242,7 +248,8 @@ int main(int argc, const char *argv[])
             std::make_unique<class SimpleGaussianNumerical>(alpha, beta, dx),
             std::make_unique<class Metropolis>(std::move(rng)),
             std::move(particles),
-            Filename
+            Filename,
+            Printout
         );
 
         auto acceptedEquilibrationSteps = system->RunEquilibrationSteps(

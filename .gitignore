@@ -33,6 +33,7 @@
 
 # Text files
 *.txt
+Energies.dat
 
 # Ignore directories
 .vscode/

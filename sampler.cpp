@@ -201,15 +201,17 @@ void Sampler::WritetoFile()
             << setw(width) << m_Energy
             << setw(width) << m_variance
             << setw(width) << m_time.count()
+            << setw(width) << omp_get_thread_num()
             << endl;
     ofile.close();
 }
 
 void Sampler::WriteEnergiestoFile(System &system, int iteration)
 {
-    std::ofstream ofile("Energies.dat", std::ofstream::app);
-    ofile << m_Energy/iteration << endl;
-    ofile.close(); 
+    int width = 16;
+    std::ofstream ofile("Outputs/Energies.dat", std::ofstream::app);
+    ofile << setw(width-6) << m_numberofparticles << setw(width) << m_params(0) << setw(width) << m_Energy/iteration << endl;
+    ofile.close();
 }
 
 void Sampler::setParameters(double alpha, double beta)

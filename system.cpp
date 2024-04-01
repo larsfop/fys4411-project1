@@ -15,7 +15,8 @@ System::System(
     std::unique_ptr<class WaveFunction> wavefunction,
     std::unique_ptr<class MonteCarlo> solver,
     std::vector<std::unique_ptr<class Particle>> particles,
-    std::string Filename
+    std::string Filename,
+    bool Printout
 )
 {
     m_numberofparticles = particles.size();
@@ -25,6 +26,7 @@ System::System(
     m_particles = std::move(particles);
 
     m_Filename = Filename;
+    m_Printout = Printout;
 }
 
 std::unique_ptr<class Sampler> System::RunMetropolisSteps(
@@ -49,7 +51,10 @@ std::unique_ptr<class Sampler> System::RunMetropolisSteps(
         }
 
         sampler->Sample(acceptedStep, this);
-        //sampler->WriteEnergiestoFile(*this, i+1);
+        if (m_Printout)
+        {
+            sampler->WriteEnergiestoFile(*this, i+1);
+        }
     }
         
     sampler->ComputeDerivatives();

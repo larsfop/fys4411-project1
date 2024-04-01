@@ -13,7 +13,8 @@ public:
         std::unique_ptr<class WaveFunction> wavefunction,
         std::unique_ptr<class MonteCarlo> solver,
         std::vector<std::unique_ptr<class Particle>> particles,
-        std::string Filename
+        std::string Filename,
+        bool Printout
     );
     std::unique_ptr<class Sampler> RunMetropolisSteps(
         double stepLength,
@@ -44,6 +45,7 @@ private:
     int m_numberofdimensions;
     std::chrono::duration<double> m_time;
     std::string m_Filename;
+    bool m_Printout;
 
     std::unique_ptr<class WaveFunction> m_wavefunction;
     std::unique_ptr<class MonteCarlo> m_solver;
