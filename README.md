@@ -48,7 +48,7 @@ For the project we have had to use different variables set in the config. For fi
 - "VMC" just means variational Monte Carlo
 
 The different problems were ran with different initial settings either set in the config or directly through the console. Differing from the config as given
-#Simple Gaussian
+# Simple Gaussian
 - seed=125
 - Particles varies from 1, 10, 100 and 500
 - Dimensions vary from 1,2 and 3
@@ -58,7 +58,7 @@ The different problems were ran with different initial settings either set in th
 - threadsused=1
 Then the remaining differs based one what result you want
 
-#Interacting Wavefunction
+# Interacting Wavefunction
 - seed=2024 and 1234, with 2024 being used for the final cycle and 1234 for the optimization
   This is done due two weird interaction with the threads for certain rng's
 - Particles varies between 10, 50 and 100
