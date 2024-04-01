@@ -13,6 +13,7 @@ using std::setprecision;
 using std::fixed;
 using std::scientific;
 
+// setup basic sampler that does the work during VMC
 Sampler::Sampler(
     int numberofparticles,
     int numberofdimensions,
@@ -33,9 +34,13 @@ Sampler::Sampler(
     m_DeltaPsi = arma::vec(2);
     m_PsiEnergyDerivative = arma::vec(2);
     m_params = arma::vec(2);
+    m_energies = arma::vec(numberofMetropolisSteps);
+    m_positions = arma::mat(numberofdimensions,numberofparticles);
+    m_hist = arma::Col<int>(numberofparticles+1);
 }
 
-Sampler::Sampler(std::vector<std::unique_ptr<class Sampler>> &samplers, std::string Filename)
+// combines the earlier mentioned samplers
+Sampler::Sampler(std::vector<std::unique_ptr<class Sampler>> &samplers, std::string Filename, bool Printout)
 {
     m_numberofthreads = samplers.size();
 
@@ -54,6 +59,9 @@ Sampler::Sampler(std::vector<std::unique_ptr<class Sampler>> &samplers, std::str
     m_DeltaPsi = arma::vec(N_params);
     m_PsiEnergyDerivative = arma::vec(N_params);
     m_params = arma::vec(N_params);
+    m_energies = arma::vec(m_numberofMetropolisSteps);
+    m_positions = arma::mat(m_numberofdimensions,m_numberofparticles);
+    m_hist = arma::Col<int>(m_numberofparticles+1);
     for (auto &sampler : samplers)
     {
         m_Energy += sampler->m_Energy;
@@ -71,6 +79,14 @@ Sampler::Sampler(std::vector<std::unique_ptr<class Sampler>> &samplers, std::str
         {
             m_params(i) += sampler->m_params(i);
         }
+
+        if (Printout)
+        {
+            m_energies += sampler->m_energies;
+        }
+
+        m_positions += sampler->m_positions;
+        m_hist += sampler->m_hist;
     }
 
     m_Energy /= m_numberofthreads*m_numberofparticles;
@@ -86,9 +102,13 @@ Sampler::Sampler(std::vector<std::unique_ptr<class Sampler>> &samplers, std::str
 
     m_params /= m_numberofthreads;
 
+    m_energies /= m_numberofthreads;
+    m_positions /= m_numberofthreads;
+
     m_Filename = Filename;
 }
 
+// basic sampler during VMC
 void Sampler::Sample(bool acceptedstep, class System *system)
 {
     auto localenergy = system->ComputeLocalEnergy();
@@ -104,6 +124,7 @@ void Sampler::Sample(bool acceptedstep, class System *system)
     m_params = system->getParameters();
 }
 
+// here comes specific sampler for specific reasons
 void Sampler::ComputeDerivatives()
 {
     double Energy = m_Energy/m_numberofMetropolisSteps;
@@ -113,14 +134,49 @@ void Sampler::ComputeDerivatives()
     m_EnergyDerivative = 2*(PsiEnergyDerivative - DeltaPsi*Energy);
 }
 
+void Sampler::SampleEnergies(int iteration)
+{
+    m_energies(iteration) = m_Energy/(iteration+1);
+}
+
+void Sampler::SamplePositions(class System *system)
+{
+    for (int i = 0; i < m_numberofparticles; i++)
+    {
+        arma::vec pos = system->getPosition(i);
+        for (int j = 0; j < m_numberofdimensions; j++)
+        {
+            m_positions(j,i) = pos(j);
+        }
+    }
+}
+
+void Sampler::SampleHist(class System *system)
+{
+    arma::vec pos = system->getPosition(0);
+    arma::vec dr(m_numberofparticles-1);
+    for (int i = 1; i < m_numberofparticles; i++)
+    {
+        arma::vec posi = system->getPosition(i);
+        dr(i-1) = arma::norm(pos-posi);
+    }
+    arma::Col<int> tmp(dr.n_elem);
+    double dr_max = arma::max(dr);
+    for (int i = 0; i < dr.n_elem; i++)
+    {
+        tmp(i) = (int) std::round(dr(i)/dr_max*m_numberofparticles);
+    }
+    for (int i : tmp)
+    {
+        m_hist(i) += 1;
+    }
+}
+
 void Sampler::ComputeAverages()
 {
     m_Energy /= m_numberofMetropolisSteps;
     m_Energy2 /= m_numberofMetropolisSteps;
     m_variance = m_Energy2 - m_Energy*m_Energy;
-
-    //m_stepnumber /= m_numberofthreads;
-    //m_numberofacceptedsteps /= m_numberofthreads;
 }
 
 void Sampler::printOutput(System &system)
@@ -171,24 +227,12 @@ void Sampler::printOutput()
     cout << endl;
 }
 
-void Sampler::CreateFile()
-{
-    int width = 20;
-    std::ofstream ofile(m_Filename, std::ofstream::trunc);
-    ofile << setw(width-8) << "alpha"
-            << setw(width) << "EnergyDerivative"
-            << setw(width) << "Energy"
-            << endl;
-    ofile.close();
-}
-
 void Sampler::WritetoFile()
 {
     int width = 16;
 
     std::ofstream ofile(m_Filename, std::ofstream::app);
 
-    // ofile << setprecision(6);
     ofile << setw(width-6) << m_numberofMetropolisSteps
             << setw(width) << m_numberofacceptedsteps
             << setw(width) << m_numberofdimensions
@@ -206,12 +250,13 @@ void Sampler::WritetoFile()
     ofile.close();
 }
 
-void Sampler::WriteEnergiestoFile(System &system, int iteration)
+void Sampler::WriteEnergiestoFile()
 {
     int width = 16;
-    std::ofstream ofile("Outputs/Energies.dat", std::ofstream::app);
-    ofile << setw(width-6) << m_numberofparticles << setw(width) << m_params(0) << setw(width) << m_Energy/iteration << endl;
-    ofile.close();
+    std::string Filename = "Outputs/Energies2.bin";
+    m_energies.save(Filename, arma::raw_binary);
+    m_positions.save("Outputs/Positions.dat", arma::raw_ascii);
+    m_hist.save("Outputs/hist_IW.dat", arma::raw_ascii);
 }
 
 void Sampler::setParameters(double alpha, double beta)

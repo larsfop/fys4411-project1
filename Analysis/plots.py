@@ -12,6 +12,7 @@ def analytical_energy():
 
 def compare_analytical(solver):
     data = pd.read_csv(f'../Outputs/1D_1P_SG_{solver}_VMC.dat', sep='\s+')
+    std = np.sqrt(data['Variance'])
     plt.figure()
     plt.plot(data['alpha'], data['Energy'], label='Numerical')
     alpha, energy = analytical_energy()
@@ -29,9 +30,7 @@ def plot_energy(data, N=1):
     alpha = data['alpha']
     Energy = data['Energy']
 
-    #data.plot('alpha', 'Energy')
     plt.plot(alpha, Energy, label=f'N = {N}')
-    #ax.fill_between(alpha, Energy+std, Energy-std, alpha=0.2)
 
 
 def plot_SG(N, dim, plotname, solver='SM'):
@@ -54,9 +53,9 @@ def plot_SG_compare(N, dim, solvers, ax):
     for solver in solvers:
         filename = f"../Outputs/{dim}D_{N}P_SG_{solver}_VMC.dat"
         data.append(pd.read_csv(filename, sep='\s+'))
-    y = data[1]['Energy'] - data[0]['Energy']
+    y = data[1]['Energy']/data[0]['Energy']
     ax.plot(data[0]['alpha'], y, label=f'N = {N}')
-    ax.axhline(0, -2, 2.08, c='gray', ls='--', alpha=0.8)
+    ax.axhline(1, -2, 2.08, c='gray', ls='--', alpha=0.8)
     ax.axvline(0.5,-100,100, c='gray', ls='--', alpha=0.8)
 
 
@@ -81,6 +80,60 @@ for dim in dims:
 
 for solver in solvers:
     compare_analytical(solver)
+
+plt.figure()
+#for dim in dims:
+dim = 1
+for solver in solvers:
+    #for particle in N:
+    particle=1
+    data = pd.read_csv(f'../Outputs/{dim}D_{particle}P_SG_{solver}_VMC.dat', sep='\s+')
+    plt.plot(data['alpha'], data['Variance'], label=f'{solver}')
+
+plt.grid()
+plt.xlabel(r'$\alpha$')
+plt.ylabel(r'Var($\langle E_L\rangle$)')
+plt.legend()
+plt.savefig('plot_variance_alpha_SG.pdf')
+
+
+particles = [10,50,100]
+plt.figure()
+for N in particles:
+    data = pd.read_csv(f'../Outputs/3D_{N}P_IW_MH_OP_VMC.dat', sep='\s+')
+    n = int(len(data['MC-cycles'])/8)
+
+    energy = np.zeros(n)
+    alpha = np.zeros(n)
+    variance = np.zeros(n)
+    iter =  np.arange(1,len(energy)+1)
+    for i in range(8):
+        energy += np.array(pd.DataFrame(data.loc[data['Thread'] == i])['Energy'])
+        alpha += np.array(pd.DataFrame(data.loc[data['Thread'] == i])['alpha'])
+        variance += np.array(pd.DataFrame(data.loc[data['Thread'] == i])['Variance'])
+
+    energy /= 8
+    alpha /= 8
+    variance /= 8
+
+    plt.plot(iter, energy/N,label=f'N = {N}')
+    plt.grid()
+    plt.xlabel('Iterations')
+    plt.ylabel(r'E [$\hbar\omega$]')
+    plt.legend()
+    plt.savefig('plot_energy_IW_iter.pdf')
+
+    #plt.plot(iter, variance,label=f'N = {N}')
+    #plt.grid()
+    #plt.legend()
+    #plt.xlabel('Iterations')
+    #plt.ylabel(r'Var($\langle E_L\rangle$)')
+    #plt.yscale('log')
+    #plt.savefig('plot_variance_IW.pdf')
+
+
+plt.show()
+
 
 if showplot:
     plt.show()

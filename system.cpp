@@ -6,11 +6,7 @@
 #include "InitialState/initialstate.h"
 #include "Solvers/montecarlo.h"
 
-#include <iostream>
-#include <stdio.h>
-using std::cout;
-using std::endl;
-
+// The main bus that combines all of the systems that makes the program run
 System::System(
     std::unique_ptr<class WaveFunction> wavefunction,
     std::unique_ptr<class MonteCarlo> solver,
@@ -29,6 +25,7 @@ System::System(
     m_Printout = Printout;
 }
 
+// runs all of the MC cycles
 std::unique_ptr<class Sampler> System::RunMetropolisSteps(
     double steplength,
     int numberofMetropolisSteps
@@ -40,30 +37,23 @@ std::unique_ptr<class Sampler> System::RunMetropolisSteps(
         steplength,
         numberofMetropolisSteps
     );
-    //int j = 0;
-    auto t1 = std::chrono::system_clock::now();
     for (int i = 0; i < numberofMetropolisSteps; i++)
     {
         bool acceptedStep;
-        for (int j = 0; j < m_numberofparticles; j++)
-        {
-            acceptedStep = m_solver->Step(steplength, *m_wavefunction, m_particles, j);
-        }
-
+        acceptedStep = m_solver->Step(steplength, *m_wavefunction, m_particles);
         sampler->Sample(acceptedStep, this);
+
+        // if you want to do some extra printing for blocking and one-body
         if (m_Printout)
         {
-            sampler->WriteEnergiestoFile(*this, i+1);
+            sampler->SampleEnergies(i);
+            sampler->SamplePositions(this);
+            sampler->SampleHist(this);
         }
     }
         
     sampler->ComputeDerivatives();
     sampler->ComputeAverages();
-    //sampler->WritetoFile(*this);
-
-    auto t2 = std::chrono::system_clock::now();
-    std::chrono::duration<double> time = t2 - t1;
-    sampler->SetTime(time);
 
     return sampler;
 }
@@ -75,10 +65,7 @@ int System::RunEquilibrationSteps(
     int acceptedSteps = 0;
 
     for (int i = 0; i < numberOfEquilibrationSteps; i++) {
-        for (int j = 0; j < m_numberofparticles; j++)
-        {
-            acceptedSteps += m_solver->Step(stepLength, *m_wavefunction, m_particles, j);
-        }
+        acceptedSteps += m_solver->Step(stepLength, *m_wavefunction, m_particles);
     }
 
     for (int i = 0; i < m_numberofparticles; i++)
@@ -89,6 +76,7 @@ int System::RunEquilibrationSteps(
     return acceptedSteps;
 }
 
+// helper functions for other classes that can't access them directly
 double System::ComputeLocalEnergy()
 {
     return m_wavefunction->LocalEnergy(m_particles);
@@ -104,6 +92,12 @@ arma::vec System::getParameters()
     return m_wavefunction->getParameters();
 }
 
+arma::vec System::getPosition(int index)
+{
+    return m_particles[index]->getPosition();
+}
+
+// optimization algorithm
 std::unique_ptr<class Sampler> System::FindOptimalParameters(
     double steplength,
     int numberofMetropolisSteps,
@@ -125,9 +119,9 @@ std::unique_ptr<class Sampler> System::FindOptimalParameters(
     );
 
     int iterations = 0;
+    // tolerance and iteration given in main file
     while (gradient > tolerance && iterations < maxiterations)
     {
-        //cout << "Iteration : " << iterations+1 << endl;
         sampler = this->RunMetropolisSteps(steplength, numberofMetropolisSteps);
         arma::vec energyderivatives = sampler->getEnergyDerivatives();
 
@@ -135,17 +129,16 @@ std::unique_ptr<class Sampler> System::FindOptimalParameters(
         for (int i = 0; i < nparams-1; i++)
         {
             params(i) -= learningrate*energyderivatives(i)/m_numberofparticles;
-            //cout << "Parameter " << i+1 << " : " << params(i) << endl;
-            //cout << "EnergyDerivative " << i+1 << " : " << energyderivatives(i) << endl;
+            // gradient only computed for tolerance
             gradient += std::abs(energyderivatives(i));
         }
 
         sampler->setFilename(m_Filename);
-        //sampler->ComputeAverages();
         sampler->WritetoFile();
         
         m_wavefunction->ChangeParameters(params(0), params(1));
         sampler->setParameters(params(0), params(1));
+        // after each optimization reset the position to before the start
         for (int i = 0; i < m_numberofparticles; i++)
         {
             m_particles[i]->SetPositionsToEquilibration();
@@ -153,10 +146,11 @@ std::unique_ptr<class Sampler> System::FindOptimalParameters(
 
         iterations++;
     }
-    //cout << "Max iterations : " << iterations << endl;
     return sampler;
 }
 
+// The optimizations algorithms clumsier little brother
+// does the same just worse
 std::unique_ptr<class Sampler> System::VaryParameters(
     double steplength,
     int numberofMetropolisSteps,

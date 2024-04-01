@@ -1,10 +1,6 @@
 
 #include "simplegaussian.h"
 
-#include <iostream>
-#include <iomanip>
-using namespace std;
-
 SimpleGaussian::SimpleGaussian(
     const double alpha,
     double beta
@@ -100,6 +96,9 @@ arma::vec SimpleGaussian::QuantumForce(
     return -4*m_alpha*qforce;
 }
 
+// same as above just with an addtional step for the position
+// rather than change the position of the particle directly
+// we just use the change directly where needed
 arma::vec SimpleGaussian::QuantumForce(
     std::vector<std::unique_ptr<class Particle>> &particles,
     const int index,
@@ -159,7 +158,7 @@ void SimpleGaussian::ChangeParameters(const double alpha, const double beta)
     m_parameters = {alpha, beta};
 }
 
-
+// Here comes the numerical calulations for the double derivative
 SimpleGaussianNumerical::SimpleGaussianNumerical(double alpha, double beta, double dx) : SimpleGaussian(alpha, beta)
 {
     m_alpha = alpha;
@@ -198,6 +197,7 @@ double SimpleGaussianNumerical::DoubleDerivative(std::vector<std::unique_ptr<cla
     int numberofdimensions = particles[0]->getNumberofDimensions();
     double dersum = 0;
     double g, gdx_p, gdx_m;
+    double dx2 = 1/(m_dx*m_dx);
     arma::vec pos, der;
 
     for (int i = 0; i < numberofparticles; i++)
@@ -207,8 +207,8 @@ double SimpleGaussianNumerical::DoubleDerivative(std::vector<std::unique_ptr<cla
         for (int j = 0; j < numberofdimensions; j++)
         {
             gdx_p = EvaluateSingleParticle(particle, m_dx, j);
-            gdx_m = EvaluateSingleParticle(particle, -2*m_dx, j);
-            dersum += (gdx_p - 2*g + gdx_m)/(m_dx*m_dx);
+            gdx_m = EvaluateSingleParticle(particle, -m_dx, j);
+            dersum += (gdx_p - 2*g + gdx_m)*dx2;
         }
         dersum /= g;
     }

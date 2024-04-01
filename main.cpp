@@ -24,10 +24,11 @@ int main(int argc, const char *argv[])
 {
     int seed, numberofMetropolisSteps, numberofparticles, numberofdimensions, maxvariations;
     double alpha, beta, steplength;
-    double dx = 1e-1;
+    double dx = 1e-4;
     string Filename;
-    bool OptimizeForParameters, Interacting, Hastings, NumericalDer, Printout;
+    bool OptimizeForParameters, Interacting, Hastings, NumericalDer, Printout, VaryParameters;
 
+    // Read from the config file to initiate certain variables
     string input;
     ifstream ifile("config");
     while (getline(ifile, input))
@@ -56,6 +57,8 @@ int main(int argc, const char *argv[])
         {Filename = value; }
         else if (name == "OptimizeForParameters")
         {OptimizeForParameters = (bool) stoi(value); }
+        else if (name == "VaryParameters")
+        {VaryParameters = (bool) stoi(value); }
         else if (name == "Interacting")
         {Interacting = (bool) stoi(value); }
         else if (name == "Hastings")
@@ -66,6 +69,7 @@ int main(int argc, const char *argv[])
         {Printout = (bool) stoi(value); }
     }
 
+    // The same settings can be changed using kwargs from the console when running the program
     if (argc > 1)
     {
         for (int i = 1; i < argc; i++)
@@ -94,7 +98,9 @@ int main(int argc, const char *argv[])
             else if (name == "Filename")
             {Filename = value; }
             else if (name == "OptimizeForParameters")
-            {OptimizeForParameters = (bool) stoi(value); }   
+            {OptimizeForParameters = (bool) stoi(value); } 
+            else if (name == "VaryParameters")
+            {VaryParameters = (bool) stoi(value); }  
             else if (name == "Interacting")
             {Interacting = (bool) stoi(value); }
             else if (name == "Hastings")
@@ -106,12 +112,15 @@ int main(int argc, const char *argv[])
         }
     }
 
-    int numberofEquilibrationSteps = 1e5;
+    // certain variable I have not needed to change
+    int numberofEquilibrationSteps = 1e6;
 
-    double eta = 0.1;
+    double eta = 0.1; // the learning rate was found to be best at this value
     double tol = 1e-5;
     int maxiter = 1e2;
 
+    // setup the basic file structure and truncuates if the file already exists
+    // This is where the filename input is used
     string Path = "Outputs/";
     int width = 16;
     Filename = Path + Filename + ".dat";
@@ -132,17 +141,16 @@ int main(int argc, const char *argv[])
             << endl;
     outfile.close();
 
-    std::ofstream ofile("Energies.dat");
-    ofile.close();
-
     auto t1 = std::chrono::system_clock::now();
 
+    // Here begins the Monte Carlo program by setting up a vector of samplers for each thread used
     std::vector<std::unique_ptr<class Sampler>> samplers;
     #pragma omp parallel
     {
         int threadnumber = omp_get_thread_num();
         auto rng = std::make_unique<Random>(seed+threadnumber);
 
+        // setup initial states
         std::vector<std::unique_ptr<class Particle>> particles;
         if (Hastings)
         {
@@ -163,9 +171,8 @@ int main(int argc, const char *argv[])
             );
         }
 
+        // setup the wavefunction
         std::unique_ptr<class WaveFunction> wavefunction;
-        std::unique_ptr<class MonteCarlo> solver;
-
         if (Interacting)
         {
             wavefunction = std::make_unique<class InteractingGaussian>(alpha, beta);
@@ -175,6 +182,8 @@ int main(int argc, const char *argv[])
             wavefunction = std::make_unique<class SimpleGaussian>(alpha, beta);
         }
 
+        // setup the solver
+        std::unique_ptr<class MonteCarlo> solver;
         if (Hastings)
         {
             solver = std::make_unique<class MetropolisHastings>(std::move(rng));
@@ -184,6 +193,7 @@ int main(int argc, const char *argv[])
             solver = std::make_unique<class Metropolis>(std::move(rng));
         }
 
+        // create the system that will do the heavy lifting
         auto system = std::make_unique<System>(
             std::move(wavefunction),
             std::move(solver),
@@ -192,11 +202,13 @@ int main(int argc, const char *argv[])
             Printout
         );
 
+        // let the particles move around a bit first
         auto acceptedEquilibrationSteps = system->RunEquilibrationSteps(
             steplength,
             numberofEquilibrationSteps
         );
 
+        // this is where the program start chugging
         std::unique_ptr<Sampler> sampler;
         if (OptimizeForParameters)
         {
@@ -208,7 +220,7 @@ int main(int argc, const char *argv[])
                 maxiter
             );
         }
-        else
+        else if (VaryParameters)
         {
             sampler = system->VaryParameters(
                 steplength,
@@ -216,12 +228,28 @@ int main(int argc, const char *argv[])
                 maxvariations
             ); 
         }
+        else
+        {
+            sampler=system->RunMetropolisSteps(
+                steplength,
+                numberofMetropolisSteps
+            );
+        }
 
         samplers.push_back(std::move(sampler));
     }
-    std::unique_ptr<Sampler> sampler = std::make_unique<class Sampler>(samplers, Filename);
+    // combine each sampler from all the theads
+    std::unique_ptr<Sampler> sampler = std::make_unique<class Sampler>(samplers, Filename, Printout);
 
-    //sampler->WritetoFile();
+    // some extra stuff at the end for specific scenarios
+    if (Printout)
+    {
+        sampler->WriteEnergiestoFile();
+    }
+    if (!OptimizeForParameters && !VaryParameters)
+    {
+        sampler->WritetoFile();
+    }
 
     sampler->printOutput();
     
@@ -231,6 +259,8 @@ int main(int argc, const char *argv[])
     cout << fixed << setprecision(3) << endl;
     cout << "Time : " << time.count() << " seconds" << endl;
 
+    // runs the numerical derivation part
+    // works the same way as above just slower
     if (NumericalDer)
     {
         auto t1 = std::chrono::system_clock::now();
@@ -263,6 +293,7 @@ int main(int argc, const char *argv[])
             maxvariations
         );
 
+        sampler->ComputeAverages();
         sampler->printOutput();
 
         auto t2 = std::chrono::system_clock::now();

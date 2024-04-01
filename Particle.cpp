@@ -2,9 +2,6 @@
 #include "Particle.h"
 #include "Math/random.h"
 
-#include <iostream>
-using namespace std;
-
 Particle::Particle(const arma::vec &position)
 {
     m_NumberofDimensions = position.size();

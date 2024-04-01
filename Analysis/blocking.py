@@ -1,5 +1,8 @@
 # Common imports
 import os
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 
 # Where to save the figures and data files
 DATA_ID = "../Outputs/"
@@ -45,11 +48,12 @@ def block(x):
     return mu, s[k]/2**(d-k)
 
 
-x = loadtxt(infile)
+Filename = '../Outputs/Energies2.bin'
+x = np.fromfile(Filename, dtype=np.float64)
 (mean, var) = block(x) 
 std = sqrt(var)
 import pandas as pd
 from pandas import DataFrame
-data ={'Mean':[mean], 'STDev':[std]}
+data ={'Mean':[mean/100], 'STDev':[std/100], 'Error':[np.std(x)/100]}
 frame = pd.DataFrame(data,index=['Values'])
 print(frame)

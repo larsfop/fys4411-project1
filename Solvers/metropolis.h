@@ -11,7 +11,6 @@ public:
     bool Step(
         double stepsize,
         class WaveFunction &wavefunction,
-        std::vector<std::unique_ptr<class Particle>> &particles,
-        int index
+        std::vector<std::unique_ptr<class Particle>> &particles
     );
 };

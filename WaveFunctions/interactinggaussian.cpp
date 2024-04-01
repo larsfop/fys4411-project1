@@ -1,11 +1,6 @@
 
 #include "interactinggaussian.h"
 
-#include <iostream>
-#include <iomanip>
-#include <chrono>
-using namespace std;
-
 InteractingGaussian::InteractingGaussian(
     const double alpha, 
     const double beta
@@ -148,7 +143,6 @@ arma::vec InteractingGaussian::QuantumForce(
         arma::vec posj = particles[j]->getPosition();
         double rkj = arma::norm(pos - posj);
 
-        //up -= (pos - posj)/(rkj*(rkj - m_a)*(rkj - m_a));
         up -= (pos - posj)/(rkj*rkj*(rkj - m_a));
     }
     for (int j = index+1; j < numberofparticles; j++)
@@ -156,7 +150,6 @@ arma::vec InteractingGaussian::QuantumForce(
         arma::vec posj = particles[j]->getPosition();
         double rkj = arma::norm(pos - posj);
 
-        //up -= (pos - posj)/(rkj*(rkj - m_a)*(rkj - m_a));
         up -= (pos - posj)/(rkj*rkj*(rkj - m_a));
     }
     return -4*m_alpha*qforce + 2*m_a*up;
@@ -222,17 +215,9 @@ double InteractingGaussian::w(std::vector<std::unique_ptr<class Particle>> &part
         double rki_n = arma::norm(pos + step - posi);
         double rki_o = arma::norm(pos - posi);
 
-        //if (rki_o<0)
-        //{
-        //    interaction *= 1e6;
-        //}
-        //else
-        //{
-            double numerator = std::max(1 - m_a/rki_n, 0.0);
-            double denominator = std::max(1 - m_a/rki_o, 0.0);
-            interaction = numerator/denominator;
-            //interaction *= std::max(1 - m_a/rki_n, 0.0)/std::max(1 - m_a/rki_o, 0.0);
-        //}
+        double numerator = std::max(1 - m_a/rki_n, 0.0);
+        double denominator = std::max(1 - m_a/rki_o, 0.0);
+        interaction = numerator/denominator;
     }
     return std::exp(-2*m_alpha*dr2)*interaction*interaction;
 }

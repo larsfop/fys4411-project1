@@ -34,6 +34,7 @@
 # Text files
 *.txt
 Energies.dat
+FYS4411_Project_1.pdf
 
 # Ignore directories
 .vscode/
