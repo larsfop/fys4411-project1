@@ -1,7 +1,7 @@
 # fys4411-project1
 Project 1 for Computational physics 2 - FYS4411
 
-This project have been done by Ali Reza Asghari Zadeh and Lars Opgård. The structure is based one this [template]()
+This project have been done by Ali Reza Asghari Zadeh and Lars Opgård. The structure is based one this [template](https://github.com/larsfop/fys4411-project1/blob/main/README.md)
 
 In this project we have created a Variational Monte Carlo program to compute the lowest state energy for a given trial wavefunction with both a non-interacting Harmoinc oscillator and a two-body interacting wavefunction. We have then introduced a brute-force Metropolis sampling algorithm which we upgraded to the Metropolis-Hastings method. We started by simply varying the wavefunction parameters, before we introduced a better optimization algorithm with the Stochastic gradient descent.
 
